@@ -1,0 +1,181 @@
+@import "tailwindcss";
+
+:root {
+  --velvet: #6e1518;
+  --velvet-2: #8f1f23;
+  --velvet-deep: #3b0c0e;
+  --gold: #e2b544;
+  --gold-2: #f4d27a;
+  --gold-shadow: #9c7724;
+  --cream: #f3e7cf;
+  --night: #0e0907;
+  --night-2: #1a110e;
+  --bulb-off: #4a2a1c;
+  --ink: #f3e7cf;
+  --ink-soft: #c9b79a;
+  --display: var(--font-display), "Oswald", "Arial Narrow", Impact, sans-serif;
+  --serif: var(--font-serif), "Cormorant", Georgia, "Times New Roman", serif;
+}
+
+html,
+body {
+  margin: 0;
+}
+body {
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 18px;
+  line-height: 1.45;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ---------- Marquee frame + chasing bulbs (shared by lobby and screen) ---------- */
+.frame {
+  position: relative;
+  background: linear-gradient(180deg, var(--velvet-2), var(--velvet));
+  border: 6px solid var(--gold);
+  border-radius: 18px;
+  padding: 26px 24px 30px;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 0 0 2px rgba(0, 0, 0, 0.35),
+    inset 0 0 60px rgba(0, 0, 0, 0.45);
+}
+.bulbs {
+  position: absolute;
+  inset: 8px;
+  pointer-events: none;
+}
+.bulb {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bulb-off);
+  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.6);
+  transform: translate(-50%, -50%);
+}
+.bulb.on {
+  background: var(--gold-2);
+  box-shadow: 0 0 10px 3px rgba(244, 210, 122, 0.75), 0 0 2px #fff;
+}
+/* chase: each bulb is lit for one third of the cycle, offset by index % 3 */
+.bulb.chase {
+  animation: bulb-chase 660ms steps(1) infinite;
+}
+@keyframes bulb-chase {
+  0% {
+    background: var(--gold-2);
+    box-shadow: 0 0 10px 3px rgba(244, 210, 122, 0.75), 0 0 2px #fff;
+  }
+  33.4%,
+  100% {
+    background: var(--bulb-off);
+    box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.6);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bulb.chase {
+    animation: none;
+    background: var(--gold-2);
+    box-shadow: 0 0 10px 3px rgba(244, 210, 122, 0.75), 0 0 2px #fff;
+  }
+}
+.frame h1 {
+  margin: 0;
+  text-align: center;
+  font-family: var(--display);
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: clamp(64px, 13vw, 170px);
+  line-height: 0.88;
+  letter-spacing: 0.01em;
+  color: var(--cream);
+  text-shadow: 0 4px 0 rgba(0, 0, 0, 0.35), 0 14px 30px rgba(0, 0, 0, 0.5);
+}
+.frame h1 span {
+  display: block;
+  color: var(--gold);
+  font-size: 0.34em;
+  letter-spacing: 0.22em;
+  font-weight: 700;
+  margin-top: 10px;
+}
+.frame p {
+  margin: 16px auto 0;
+  max-width: 640px;
+  text-align: center;
+  font-style: italic;
+  font-size: clamp(18px, 2.2vw, 24px);
+  color: var(--cream);
+  opacity: 0.92;
+}
+
+/* ---------- Placeholder poster art (until real posters land) ---------- */
+.art {
+  position: absolute;
+  inset: 0;
+}
+.art.a1 { background: radial-gradient(circle at 50% 38%, var(--gold) 0 22%, transparent 23%), linear-gradient(180deg, var(--velvet-2), #3b0c0e); }
+.art.a2 { background: repeating-linear-gradient(135deg, var(--velvet) 0 14px, #4d1013 14px 28px); }
+.art.a3 { background: linear-gradient(180deg, #e2b544 0 35%, #3b0c0e 35%); }
+.art.a4 { background: radial-gradient(circle at 80% 90%, #f3e7cf 0 30%, transparent 31%), linear-gradient(180deg, #8f1f23, #1e0709); }
+.art.a5 { background: repeating-radial-gradient(circle at 50% 120%, var(--gold) 0 6px, transparent 6px 30px), linear-gradient(180deg, #3b0c0e, #8f1f23); }
+.art.a6 { background: linear-gradient(120deg, #1e1411 50%, #8f1f23 50%); }
+.art.a7 { background: conic-gradient(from 200deg at 50% 45%, var(--gold), var(--velvet), #1e0709, var(--gold)); }
+.art.a8 { background: linear-gradient(180deg, #f3e7cf 0 18%, #6e1518 18% 82%, #f3e7cf 82%); }
+.art.a9 { background: radial-gradient(ellipse at 50% 100%, #e2b544 0 40%, transparent 41%), #1e0709; }
+
+/* ---------- Velvet curtains ---------- */
+.curtain {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 52%;
+  z-index: 200;
+  background: repeating-linear-gradient(90deg, #8f1f23 0 26px, #5c1114 26px 40px, #7a181c 40px 64px);
+  box-shadow: inset 0 -60px 120px rgba(0, 0, 0, 0.55);
+  transition: transform 1.6s cubic-bezier(0.7, 0, 0.2, 1);
+}
+.curtain.fixed {
+  position: fixed;
+}
+.curtain.l { left: 0; }
+.curtain.r { right: 0; }
+.curtain.l.go { transform: translateX(-104%); }
+.curtain.r.go { transform: translateX(104%); }
+.curtain::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 22px;
+  background: var(--gold);
+  opacity: 0.9;
+}
+.curtain.l::after { right: 0; }
+.curtain.r::after { left: 0; }
+
+/* ---------- Spotlight sweep ---------- */
+@keyframes sweep {
+  from { transform: translateX(-50%) rotate(-38deg); }
+  to { transform: translateX(-50%) rotate(38deg); }
+}
+@keyframes glow {
+  50% { box-shadow: 0 0 0 6px rgba(226, 181, 68, 0.25); }
+}
+@keyframes blink {
+  50% { opacity: 0.2; }
+}
+@keyframes grain {
+  to { transform: translate(4%, 6%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .curtain { transition: none; }
+}

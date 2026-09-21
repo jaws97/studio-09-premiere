@@ -94,6 +94,7 @@ export const films: Film[] = raw.map(([title, star, source, day], i) => ({
 }));
 
 export const pad2 = (n: number) => String(n).padStart(2, "0");
-export const firstName = (f: Film) => f.star.split(" ")[0];
+/** skips initials, so "R Ketan Kumar" is Ketan rather than R */
+export const firstName = (f: Film) => f.star.split(" ").find((w) => w.length > 2) ?? f.star;
 /** placeholder art class until real posters land (a1..a9) */
 export const artClass = (f: Film) => `art a${((f.no - 1) % 9) + 1}`;

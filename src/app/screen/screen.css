@@ -336,13 +336,36 @@
 
 /* ------------------------------------------------------------- premiere */
 .premiere { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, #2a1512, var(--night) 70%); }
+.ambient {
+  position: absolute;
+  inset: -6%;
+  background-size: cover;
+  background-position: center;
+  animation: ambient-in 2.4s 1.7s ease both, ambient-drift 26s 1.7s ease-in-out infinite alternate;
+}
+/* keeps the billing legible over any palette: darker on the text side and at the edges */
+.ambient::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(8, 5, 4, 0.2) 0%, rgba(8, 5, 4, 0.45) 38%, rgba(8, 5, 4, 0.6) 100%),
+    radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.5) 100%);
+}
+@keyframes ambient-in {
+  from { opacity: 0; }
+}
+@keyframes ambient-drift {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.08) translate(-1.5%, 1%); }
+}
 /* premiere-night searchlights behind everything */
 .spot {
   position: absolute;
   bottom: -30%;
   width: 20%;
   height: 170%;
-  background: linear-gradient(0deg, rgba(244, 210, 122, 0.3), transparent 75%);
+  background: linear-gradient(0deg, color-mix(in srgb, var(--accent, #f4d27a) 32%, transparent), transparent 75%);
   transform-origin: 50% 100%;
   filter: blur(14px);
   mix-blend-mode: screen;
@@ -404,7 +427,7 @@
   border-radius: 14px;
   overflow: hidden;
   background: var(--velvet);
-  box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 0 0 0 6px var(--gold), 0 0 90px rgba(226, 181, 68, 0.35);
+  box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 0 0 0 6px var(--gold), 0 0 110px color-mix(in srgb, var(--accent, var(--gold)) 45%, transparent);
   animation: poster-in 1.3s 2s cubic-bezier(0.15, 0.9, 0.25, 1) both, poster-float 9s 3.3s ease-in-out infinite alternate;
 }
 @keyframes poster-float {
@@ -449,11 +472,11 @@
 @keyframes bill-in {
   from { opacity: 0; transform: translateY(50px); }
 }
-.billing .after { animation-delay: 2.7s; display: inline-block; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.22em; font-size: 28px; font-weight: 700; color: var(--night); background: var(--gold); padding: 6px 18px; border-radius: 6px; }
+.billing .after { animation-delay: 2.7s; display: inline-block; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.22em; font-size: 28px; font-weight: 700; color: var(--night); background: var(--accent, var(--gold)); padding: 6px 18px; border-radius: 6px; }
 .billing h2 { animation: none; margin: 30px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 150px; line-height: 0.88; color: var(--cream); text-shadow: 0 8px 0 rgba(0, 0, 0, 0.45); text-wrap: balance; }
 .billing .tagline { animation-delay: 3.4s; margin: 26px 0 0; font-style: italic; font-size: 44px; line-height: 1.2; color: var(--cream); max-width: 900px; }
 .billing .starring { animation-delay: 3.7s; margin: 36px 0 0; font-style: italic; font-size: 52px; color: var(--ink-soft); }
-.billing .starring b { display: block; font-style: normal; font-weight: 600; font-size: 84px; line-height: 1.05; color: var(--gold-2); }
+.billing .starring b { display: block; font-style: normal; font-weight: 600; font-size: 84px; line-height: 1.05; color: var(--accent, var(--gold-2)); }
 .billing .release { animation-delay: 4.1s; margin: 40px 0 0; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.16em; font-size: 30px; color: var(--ink-soft); }
 .billing .release b { color: var(--cream); }
 
@@ -522,6 +545,7 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .bigposter, .foil, .spot { animation-name: phase-in; animation-iteration-count: 1; }
+  .ambient { animation: ambient-in 1s ease both; }
   .phase.weave { animation: phase-in 0.7s ease both; }
   .damage { display: none; }
 }

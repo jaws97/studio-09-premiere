@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { Bulbs } from "@/components/Bulbs";
 import { Curtains } from "@/components/Curtains";
 import { artClass, films, firstName, pad2, type Film } from "@/data/season";
+import posterColors from "@/data/poster-colors.json";
 import { premiereLine, showCues } from "@/data/vo";
 import * as sfx from "@/lib/sfx";
 import { say, setVoMuted, stopVo } from "@/lib/vo";
@@ -109,7 +110,7 @@ const FILM_PHASES = new Set<string>(["leader", "ident", "title", "trailer", "pre
  * resolution and stretched — it is all soft light, and the projector laptop's
  * integrated GPU has better things to do.
  */
-function Beam() {
+function Beam({ tint = "hsl(43 85% 72%)" }: { tint?: string }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current;
@@ -135,8 +136,9 @@ function Beam() {
     const draw = (t: number) => {
       g.clearRect(0, 0, W, H);
       const cone = g.createRadialGradient(ox, oy, 0, ox, oy, W * 1.1);
-      cone.addColorStop(0, "rgba(244,210,122,0.20)");
-      cone.addColorStop(1, "rgba(244,210,122,0)");
+      // "hsl(h s% l%)" → same colour with alpha
+      cone.addColorStop(0, tint.replace(")", " / 0.2)"));
+      cone.addColorStop(1, tint.replace(")", " / 0)"));
       g.fillStyle = cone;
       g.beginPath();
       g.moveTo(ox, oy);
@@ -161,7 +163,7 @@ function Beam() {
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, []);
+  }, [tint]);
   return <canvas className="beamfx" ref={ref} aria-hidden="true" />;
 }
 
@@ -426,9 +428,14 @@ function Premiere({ film }: { film: Film }) {
   useCue(sfx.snap, 1050); // the clapper arm lands
   useCue(sfx.reveal, 1900); // the poster swings in
   useCue(() => say(premiereLine(film)), 3300);
+  const accent = (posterColors as Record<string, string>)[pad2(film.no)];
   return (
-    <div className="premiere">
-      <Beam />
+    <div className="premiere" style={{ "--accent": accent } as React.CSSProperties}>
+      {/* each film brings its own room: a soft wash of its poster's colours (pre-blurred by scripts/poster-assets.mjs) */}
+      {film.poster && (
+        <div className="ambient" style={{ backgroundImage: `url(${film.poster.replace(".webp", "-bg.webp")})` }} />
+      )}
+      <Beam tint={accent} />
       <div className="cuemark" />
       <div className="spot s1" />
       <div className="spot s2" />

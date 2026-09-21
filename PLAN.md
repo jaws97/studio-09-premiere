@@ -93,7 +93,9 @@ Projector(s) + speakers available; lights can be dimmed (assume dim, not blackou
 ## Build status
 **Slice 1 (Sep 21) — done:** Next.js 16 scaffold · tokens + fonts · film data in `src/data/season.ts` · `/` lobby ported from the mock with a server-side title embargo (`src/data/event.ts` → `revealAt`; `NEXT_PUBLIC_REVEAL=1` to preview) · `/screen` 1920×1080 scaled stage with all 8 phases on placeholder art (doors + live seat map + real QR, film leader, ident, curtain, trailer slot, premieres with clapperboard, applause meter + confetti, credits roll) · `/host` remote (next/back, phase jump, premiere jump, rehearsal: simulate arrival / bravos / reset) · show state behind a transport seam in `src/lib/show.ts` (BroadcastChannel today → Supabase later). Keyboard on `/screen`: ←/→/space, `f` fullscreen.
 
-**Next:** `/ticket` + drag-to-tear · Supabase transport + admit API + PIN on `/host` and `/screen` (they bundle the secret titles) · sound design (Howler sprites) · GSAP polish on premieres · `/join` (bravo, messages, paparazzi) · Higgsfield pilot.
+**Slice 2 (Sep 21) — done:** `/ticket` box office (name → ticket; cast names get a gold ★ CAST ticket and their billing seat, others a hashed seat until the guest list is in the DB) · drag-to-tear along the perforation (monotonic tear, commits at 60%, springs back below; stub pivots from the attached end then falls away) · haptic tick per perforation + WebAudio-synthesised rip (`src/lib/rip.ts`, no assets) · confetti + ADMITTED stamp · tear dispatches `seat` so `/screen` lights the seat · "Tear ticket" button as accessible fallback · ticket persists in localStorage.
+
+**Next:** Supabase transport + admit API + PIN on `/host` and `/screen` (they bundle the secret titles) · sound design (Howler sprites) · GSAP polish on premieres · `/join` (bravo, messages, paparazzi) · Higgsfield pilot.
 
 ## Open questions
 - Pilot person + their one photo

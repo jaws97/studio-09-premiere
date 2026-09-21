@@ -1,0 +1,222 @@
+.ticket-page {
+  min-height: 100dvh;
+  padding: 22px 16px 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 22px;
+  overflow: hidden;
+  background: radial-gradient(ellipse 90% 45% at 50% 0, rgba(226, 181, 68, 0.16), transparent 65%),
+    repeating-linear-gradient(90deg, rgba(0, 0, 0, 0.18) 0 2px, transparent 2px 46px);
+  overscroll-behavior: none;
+}
+.tp-head { text-align: center; font-family: var(--display); text-transform: uppercase; }
+.tp-head b { display: block; font-size: 44px; line-height: 0.9; font-weight: 900; color: var(--cream); }
+.tp-head span { font-size: 13px; letter-spacing: 0.24em; color: var(--gold); font-weight: 700; }
+
+/* ---------- box office ---------- */
+.boxoffice {
+  width: min(100%, 380px);
+  margin-top: 8vh;
+  background: var(--night-2);
+  border: 1px solid rgba(226, 181, 68, 0.3);
+  border-radius: 16px;
+  padding: 26px 22px;
+  display: grid;
+  gap: 14px;
+}
+.boxoffice h1 { margin: 0; font-family: var(--display); text-transform: uppercase; font-weight: 900; font-size: 40px; line-height: 1; color: var(--cream); }
+.boxoffice p { margin: 0; font-style: italic; font-size: 20px; color: var(--ink-soft); }
+.boxoffice input {
+  font: inherit;
+  font-size: 20px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 2px solid rgba(226, 181, 68, 0.45);
+  background: #0a0605;
+  color: var(--cream);
+  width: 100%;
+}
+.boxoffice input:focus { outline: none; border-color: var(--gold-2); }
+.boxoffice button,
+.tk-alt {
+  background: var(--gold);
+  color: var(--night);
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 22px;
+  font-family: var(--display);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 18px;
+  box-shadow: 0 6px 0 var(--gold-shadow);
+}
+.boxoffice button:disabled { opacity: 0.4; box-shadow: none; }
+.boxoffice button:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 2px 0 var(--gold-shadow); }
+
+/* ---------- the ticket ---------- */
+.tk {
+  --paper: #f3e7cf;
+  --paper-ink: #1c120e;
+  --accent: var(--velvet);
+  --zig: 9px;
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.tk.cast {
+  --paper: #f0cf74;
+  --accent: #5a1013;
+}
+.tk-paper {
+  position: relative;
+  filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.6));
+  animation: tk-print 0.9s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+@keyframes tk-print {
+  from { transform: translateY(-110%) rotate(-3deg); }
+}
+.tk-bodywrap { position: relative; z-index: 2; }
+.tk-body,
+.tk-stub {
+  position: relative;
+  color: var(--paper-ink);
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.025) 0 1px, transparent 1px 3px),
+    var(--paper);
+}
+.tk-body {
+  z-index: 2;
+  padding: 20px 22px calc(26px + var(--zig));
+  border-radius: 16px 16px 0 0;
+  border-top: 10px solid var(--accent);
+  /* torn-paper zig-zag along the bottom edge */
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--zig)) var(--zig) repeat-x,
+    linear-gradient(#000 0 0) top / 100% calc(100% - var(--zig)) no-repeat;
+}
+.tk-top { display: flex; justify-content: space-between; align-items: center; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.2em; font-size: 12px; font-weight: 700; color: var(--accent); }
+.tk-top em { font-style: normal; background: var(--accent); color: var(--paper); padding: 3px 9px; border-radius: 999px; letter-spacing: 0.14em; }
+.tk-body h1 { margin: 8px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 58px; line-height: 0.88; }
+.tk-sub { margin: 6px 0 0; font-style: italic; font-size: 18px; color: #5a4426; }
+.tk-name { margin-top: 18px; padding-top: 14px; border-top: 2px solid rgba(28, 18, 14, 0.18); }
+.tk small { display: block; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.18em; font-size: 11px; color: #6e5a3a; font-weight: 700; }
+.tk-name b { display: block; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 30px; line-height: 1; margin-top: 4px; overflow-wrap: anywhere; }
+.tk-meta { margin-top: 16px; display: grid; grid-template-columns: 1.4fr 1fr 1fr; gap: 10px; }
+.tk-meta b { display: block; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 34px; line-height: 1; margin-top: 2px; }
+
+.tk-stamp {
+  position: absolute;
+  right: 14px;
+  top: 40%;
+  padding: 6px 14px;
+  border: 5px double #a3161b;
+  border-radius: 10px;
+  color: #a3161b;
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 36px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transform: rotate(-14deg);
+  mix-blend-mode: multiply;
+  animation: stamp 0.45s 0.25s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+@keyframes stamp {
+  from { opacity: 0; transform: rotate(-14deg) scale(2.6); }
+}
+
+/* the stub tucks under the body by one zig so there is no gap while whole */
+.tk-stub {
+  z-index: 1;
+  margin-top: calc(-1 * var(--zig));
+  padding: calc(18px + var(--zig)) 22px 18px;
+  border-radius: 0 0 16px 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 12px;
+  align-items: center;
+  transform-origin: 100% 0;
+  will-change: transform;
+  mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--zig)) var(--zig) repeat-x,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--zig)) no-repeat;
+}
+/* once torn the stub falls out of flow so the welcome text closes the gap */
+.tk.torn .tk-stub { position: absolute; left: 0; right: 0; pointer-events: none; }
+.tk-stub-txt b { display: block; font-family: var(--display); font-weight: 900; font-size: 50px; line-height: 0.95; }
+.tk-stub-txt span { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: #6e5a3a; }
+.tk-qr { width: 92px; height: 92px; }
+
+/* ---------- seam: the usher's swipe zone ---------- */
+.tk-seam {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  /* centred on the perforation: the middle of the body's zig-zag edge */
+  bottom: calc(var(--zig) / 2 - 32px);
+  height: 64px;
+  touch-action: none;
+  cursor: grab;
+}
+.tk-seam::before {
+  content: "";
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  top: 50%;
+  border-top: 3px dotted rgba(28, 18, 14, 0.55);
+}
+.tk-gap {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  height: 8px;
+  margin-top: -3px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.15));
+  border-radius: 0 6px 6px 0;
+  pointer-events: none;
+}
+.tk-handle {
+  position: absolute;
+  top: 50%;
+  width: 34px;
+  height: 34px;
+  margin: -17px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 4px var(--paper), 0 4px 10px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+.tk-handle::after {
+  content: "→";
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--paper);
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 20px;
+}
+
+/* ---------- below the ticket ---------- */
+.tk-after { display: grid; gap: 12px; justify-items: center; text-align: center; }
+.tk-after b { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.12em; font-size: 17px; color: var(--gold); }
+.tk-after span { font-style: italic; font-size: 19px; color: var(--ink-soft); }
+.tk.torn .tk-after b { font-size: 30px; letter-spacing: 0.04em; color: var(--cream); font-weight: 900; }
+.pulse-hint { animation: hint 1.4s ease-in-out infinite; }
+@keyframes hint {
+  50% { transform: translateX(8px); opacity: 0.6; }
+}
+.tk-alt { font-size: 14px; padding: 10px 18px; background: transparent; color: var(--gold); box-shadow: inset 0 0 0 2px rgba(226, 181, 68, 0.5); }
+.tk-alt.quiet { box-shadow: none; color: var(--ink-soft); text-transform: none; letter-spacing: 0; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 16px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tk-paper, .tk-stamp, .pulse-hint { animation: none; }
+}

@@ -30,6 +30,17 @@ export function Screen() {
   const scale = useStageScale();
   const [armed, setArmed] = useState(false);
 
+  // There is one projector on one laptop, so opening this page IS the start of the show: always begin
+  // on the doors (QR) screen, whatever phase was left behind by a rehearsal. Guests already seated and
+  // bravos are kept. After a mid-show refresh the host jumps back from /host.
+  const [opened, setOpened] = useState(false);
+  const opening = useRef(false);
+  useEffect(() => {
+    if (!ready || opening.current) return;
+    opening.current = true;
+    void dispatch({ type: "goto", phase: "doors" }).finally(() => setOpened(true));
+  }, [ready, dispatch]);
+
   useEffect(() => {
     sfx.setMuted(state.muted);
     setVoMuted(state.muted);
@@ -58,6 +69,7 @@ export function Screen() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") void dispatch({ type: "next" });
       else if (e.key === "ArrowLeft" || e.key === "PageUp") void dispatch({ type: "prev" });
+      else if (e.key === "Home") void dispatch({ type: "goto", phase: "doors" });
       else if (e.key === "f") document.documentElement.requestFullscreen?.();
     };
     addEventListener("keydown", onKey);
@@ -67,7 +79,7 @@ export function Screen() {
   return (
     <div className="screen-root">
       <div className="stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
-        {ready && (
+        {ready && opened && (
           <div className={`phase${FILM_PHASES.has(state.phase) ? " weave" : ""}`} key={state.phase}>
             {state.phase === "doors" && <Doors seated={state.seated} photos={state.photos} />}
             {state.phase === "curtain" && (
@@ -84,7 +96,7 @@ export function Screen() {
             {state.phase === "credits" && <Credits wishes={state.wishes} />}
           </div>
         )}
-        {ready && !armed && (
+        {ready && opened && !armed && (
           <button type="button" className="arm" onClick={armRoom}>
             <b>Click to arm sound</b>
             <span>and go fullscreen · ← → step the show · host remote at /host</span>

@@ -12,7 +12,7 @@ npm run dev
 | Route | Who | What |
 |---|---|---|
 | `/` | everyone, before the night | Teaser lobby. Titles and cast stay sealed until `revealAt` in `src/data/event.ts` (`NEXT_PUBLIC_REVEAL=1` previews the reveal). |
-| `/screen` | projector laptop (PIN) | The show. Click once to arm sound + fullscreen. `←` `→` / space step the show if the remote dies. |
+| `/screen` | projector laptop (PIN) | The show. Always opens on the doors (QR) screen. Click once to arm sound + fullscreen. `←` `→` / space step the show if the remote dies; `Home` returns to doors. After a mid-show refresh, jump back from `/host`. |
 | `/host` | organiser's phone (PIN) | Remote: next/back, jump to phase or premiere, approve messages and photos, mute, rehearsal tools, reset. |
 | `/ticket` | guests | Box office → ticket → the usher swipes along the perforation to tear it. Seats the guest on `/screen`. |
 | `/join` | guests, after admission | Bravo button (drives the applause meter), a line for the end credits, paparazzi photo. |

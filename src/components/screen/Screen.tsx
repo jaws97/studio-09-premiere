@@ -4,7 +4,9 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { Bulbs } from "@/components/Bulbs";
 import { Curtains } from "@/components/Curtains";
 import { artClass, films, firstName, pad2, type Film } from "@/data/season";
+import { premiereLine, showCues } from "@/data/vo";
 import * as sfx from "@/lib/sfx";
+import { say, setVoMuted, stopVo } from "@/lib/vo";
 import { PHASE_LABEL, SEATS, useShow, type Seated, type ShowState, type Wish } from "@/lib/show";
 
 const STAGE_W = 1920;
@@ -27,7 +29,22 @@ export function Screen() {
   const scale = useStageScale();
   const [armed, setArmed] = useState(false);
 
-  useEffect(() => sfx.setMuted(state.muted), [state.muted, armed]);
+  useEffect(() => {
+    sfx.setMuted(state.muted);
+    setVoMuted(state.muted);
+  }, [state.muted, armed]);
+
+  // a phase change cuts the announcer off; the new phase brings its own line
+  useEffect(() => stopVo, [state.phase, state.premiere]);
+
+  // announcer lines the host fires by hand
+  const cueN = state.cue?.n ?? 0;
+  const heard = useRef<number | null>(null);
+  useEffect(() => {
+    if (!ready) return;
+    if (heard.current !== null && cueN > heard.current && state.cue && armed) say(showCues[state.cue.id]);
+    heard.current = cueN;
+  }, [cueN, ready, armed, state.cue]);
 
   // Browsers only play audio after a gesture, so the operator arms the room once.
   const armRoom = async () => {
@@ -50,7 +67,7 @@ export function Screen() {
     <div className="screen-root">
       <div className="stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
         {ready && (
-          <div className="phase" key={state.phase}>
+          <div className={`phase${FILM_PHASES.has(state.phase) ? " weave" : ""}`} key={state.phase}>
             {state.phase === "doors" && <Doors seated={state.seated} photos={state.photos} />}
             {state.phase === "leader" && <Leader onDone={() => void dispatch({ type: "next", ifPhase: "leader" })} />}
             {state.phase === "ident" && <Ident />}
@@ -67,6 +84,7 @@ export function Screen() {
             <span>and go fullscreen · ← → step the show · host remote at /host</span>
           </button>
         )}
+        {FILM_PHASES.has(state.phase) && <div className="damage" aria-hidden="true" />}
         <div className="grain" aria-hidden="true" />
         <div className="vignette" aria-hidden="true" />
         <div className="phase-chip">
@@ -76,6 +94,70 @@ export function Screen() {
       </div>
     </div>
   );
+}
+
+/** phases that are "on film": they get gate weave, scratches and dust */
+const FILM_PHASES = new Set<string>(["leader", "ident", "trailer", "premieres", "credits"]);
+
+/**
+ * Projector beam with dust motes drifting through it. Drawn at quarter
+ * resolution and stretched — it is all soft light, and the projector laptop's
+ * integrated GPU has better things to do.
+ */
+function Beam() {
+  const ref = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    const cv = ref.current;
+    const g = cv?.getContext("2d");
+    if (!cv || !g) return;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const W = (cv.width = 480);
+    const H = (cv.height = 270);
+    // cone from the top-right corner down across the stage
+    const ox = W * 1.02;
+    const oy = -H * 0.05;
+    const aim = Math.atan2(H * 0.62 - oy, W * 0.2 - ox);
+    const spread = 0.23;
+    const motes = Array.from({ length: 90 }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: 0.4 + Math.random() * 1.1,
+      vx: -0.05 - Math.random() * 0.12,
+      vy: 0.02 + Math.random() * 0.06,
+      tw: Math.random() * Math.PI * 2,
+    }));
+    let raf = 0;
+    const draw = (t: number) => {
+      g.clearRect(0, 0, W, H);
+      const cone = g.createRadialGradient(ox, oy, 0, ox, oy, W * 1.1);
+      cone.addColorStop(0, "rgba(244,210,122,0.20)");
+      cone.addColorStop(1, "rgba(244,210,122,0)");
+      g.fillStyle = cone;
+      g.beginPath();
+      g.moveTo(ox, oy);
+      g.arc(ox, oy, W * 1.2, aim - spread, aim + spread);
+      g.closePath();
+      g.fill();
+      for (const m of motes) {
+        m.x += m.vx;
+        m.y += m.vy + Math.sin(t / 1400 + m.tw) * 0.03;
+        if (m.x < -4) m.x = W + 4;
+        if (m.y > H + 4) m.y = -4;
+        let off = Math.atan2(m.y - oy, m.x - ox) - aim;
+        off = Math.abs(Math.atan2(Math.sin(off), Math.cos(off))); // wrap to [-π, π]
+        if (off > spread) continue; // motes only catch the light inside the beam
+        const a = (1 - off / spread) * (0.35 + 0.35 * Math.sin(t / 500 + m.tw));
+        g.fillStyle = `rgba(255,240,200,${a.toFixed(3)})`;
+        g.beginPath();
+        g.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+        g.fill();
+      }
+      raf = requestAnimationFrame(draw);
+    };
+    raf = requestAnimationFrame(draw);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+  return <canvas className="beamfx" ref={ref} aria-hidden="true" />;
 }
 
 /** Fire a cue `delay` ms after mount. The timeout keeps dev StrictMode's double mount from doubling the sound. */
@@ -121,8 +203,11 @@ function Doors({ seated, photos }: { seated: Seated[]; photos: string[] }) {
         <div className="house-head">
           <span>The house</span>
           <b>
-            {seated.length}
-            <small> / {SEATS} seated</small>
+            {Math.min(seated.length, SEATS)}
+            <small>
+              {" "}
+              / {SEATS} seated{seated.length > SEATS && ` · +${seated.length - SEATS} in the balcony`}
+            </small>
           </b>
         </div>
         <div className="screen-bar">Screen</div>
@@ -239,6 +324,7 @@ function Ident() {
     <div className="ident">
       {/* swapped for the generated ident video once it exists */}
       <div className="ident-rays" />
+      <Beam />
       <div className="ident-mark">
         <span>A</span>
         <b>Studio 09</b>
@@ -253,6 +339,7 @@ function Ident() {
 function CurtainUp() {
   const [open, setOpen] = useState(false);
   useCue(sfx.swoosh, 900);
+  useCue(() => say(showCues.curtain), 2200);
   useEffect(() => {
     const t = setTimeout(() => setOpen(true), 900);
     return () => clearTimeout(t);
@@ -272,6 +359,7 @@ function CurtainUp() {
 /* ---------------------------------------------------------------- trailer */
 
 function Trailer() {
+  useCue(() => say(showCues.trailer), 600);
   return (
     <div className="trailer">
       {/* <video src="/media/trailer.mp4" autoPlay /> once the trailer is cut */}
@@ -288,8 +376,11 @@ function Trailer() {
 function Premiere({ film }: { film: Film }) {
   useCue(sfx.snap, 1050); // the clapper arm lands
   useCue(sfx.reveal, 1900); // the poster swings in
+  useCue(() => say(premiereLine(film)), 3300);
   return (
     <div className="premiere">
+      <Beam />
+      <div className="cuemark" />
       <div className="spot s1" />
       <div className="spot s2" />
       <div className="clapper">
@@ -335,6 +426,7 @@ function Premiere({ film }: { film: Film }) {
               </span>
             ))}
           </h2>
+          <p className="tagline">{film.tagline}</p>
           <p className="starring">
             Starring <b>{film.star}</b>
           </p>
@@ -349,14 +441,19 @@ function Premiere({ film }: { film: Film }) {
 
 /* ----------------------------------------------------------- curtain call */
 
-/** claps per second that pins the needle */
-const FULL_HOUSE = 25;
+/**
+ * Claps per second that pin the needle. It scales with the house so a
+ * standing ovation needs most of the room tapping, whether 30 came or 130.
+ */
+const fullHouse = (seated: number) => Math.max(25, seated * 1.5);
 
 function CurtainCall({ state }: { state: ShowState }) {
   const total = useRef(state.applause);
+  const full = useRef(fullHouse(state.seated.length));
   useEffect(() => {
     total.current = state.applause;
-  }, [state.applause]);
+    full.current = fullHouse(state.seated.length);
+  }, [state.applause, state.seated.length]);
   const [level, setLevel] = useState(0);
   const peaked = useRef(false);
   const crowd = useRef<ReturnType<typeof sfx.applause> | null>(null);
@@ -370,6 +467,7 @@ function CurtainCall({ state }: { state: ShowState }) {
     };
   }, []);
   useEffect(() => crowd.current?.level?.(level), [level]);
+  useCue(() => say(showCues.curtaincall), 700);
 
   useEffect(() => {
     const samples: [number, number][] = [];
@@ -379,7 +477,7 @@ function CurtainCall({ state }: { state: ShowState }) {
       while (samples.length > 1 && now - samples[0][0] > 2000) samples.shift();
       const [t0, c0] = samples[0];
       const rate = now > t0 ? ((total.current - c0) / (now - t0)) * 1000 : 0;
-      setLevel((prev) => prev + (Math.min(1, rate / FULL_HOUSE) - prev) * 0.35);
+      setLevel((prev) => prev + (Math.min(1, rate / full.current) - prev) * 0.35);
     }, 100);
     return () => clearInterval(t);
   }, []);
@@ -387,6 +485,7 @@ function CurtainCall({ state }: { state: ShowState }) {
   useEffect(() => {
     if (level > 0.92 && !peaked.current) {
       peaked.current = true;
+      say(showCues.ovation);
       import("canvas-confetti").then(({ default: confetti }) => {
         const colors = ["#f4d27a", "#f3e7cf", "#e2b544", "#8f1f23"];
         confetti({ particleCount: 220, spread: 120, startVelocity: 55, origin: { x: 0.5, y: 0.7 }, colors });
@@ -440,6 +539,7 @@ const stockRoles = [
 ];
 
 function Credits({ wishes }: { wishes: Wish[] }) {
+  useCue(() => say(showCues.credits), 1500);
   return (
     <div className="credits">
       <div className="roll">

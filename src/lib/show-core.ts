@@ -43,8 +43,13 @@ export type ShowState = {
   wishes: Wish[];
   /** approved paparazzi photo ids, newest last */
   photos: string[];
+  /** last announcer cue the host fired; `n` changes every time so repeats still play */
+  cue: { id: AnnounceCue; n: number } | null;
   rev: number;
 };
+
+export const ANNOUNCE_CUES = ["doors", "seats", "premieres"] as const;
+export type AnnounceCue = (typeof ANNOUNCE_CUES)[number];
 
 export const initialShow: ShowState = {
   phase: "doors",
@@ -54,6 +59,7 @@ export const initialShow: ShowState = {
   muted: false,
   wishes: [],
   photos: [],
+  cue: null,
   rev: 0,
 };
 
@@ -64,6 +70,7 @@ export type HostAction =
   | { type: "goto"; phase: Phase }
   | { type: "premiere"; index: number }
   | { type: "mute"; muted: boolean }
+  | { type: "announce"; cue: AnnounceCue }
   | { type: "simulate" }
   | { type: "clap"; n: number }
   | { type: "reset" };
@@ -82,6 +89,8 @@ export function stepShow(s: ShowState, a: HostAction, films: number): ShowState 
       return PHASES.includes(a.phase) ? { ...s, phase: a.phase } : s;
     case "premiere":
       return a.index >= 0 && a.index < films ? { ...s, phase: "premieres", premiere: a.index } : s;
+    case "announce":
+      return ANNOUNCE_CUES.includes(a.cue) ? { ...s, cue: { id: a.cue, n: (s.cue?.n ?? 0) + 1 } } : s;
     case "mute":
       return { ...s, muted: !!a.muted };
     case "clap":

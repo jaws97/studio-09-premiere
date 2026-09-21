@@ -25,6 +25,52 @@
 @keyframes phase-in {
   from { opacity: 0; }
 }
+/* gate weave: the frame never sits perfectly still in the projector gate */
+.phase.weave { animation: phase-in 0.7s ease both, weave 1.7s steps(1) infinite; }
+@keyframes weave {
+  0% { translate: 0 0; }
+  13% { translate: 0.6px -0.8px; }
+  29% { translate: -0.7px 0.5px; }
+  46% { translate: 0.4px 1px; }
+  61% { translate: -0.5px -0.6px; }
+  78% { translate: 0.9px 0.3px; }
+  90% { translate: -0.3px 0.7px; }
+}
+/* scratches that come and go */
+.damage { position: absolute; inset: 0; z-index: 299; pointer-events: none; overflow: hidden; }
+.damage::before,
+.damage::after { content: ""; position: absolute; top: 0; bottom: 0; width: 2px; background: linear-gradient(180deg, transparent, rgba(255, 245, 220, 0.35) 20%, rgba(255, 245, 220, 0.12) 70%, transparent); opacity: 0; }
+.damage::before { animation: scratch 5.3s steps(1) infinite; }
+.damage::after { width: 1px; animation: scratch 7.9s 2.1s steps(1) infinite reverse; }
+@keyframes scratch {
+  0% { left: 22%; opacity: 0; }
+  8% { left: 22%; opacity: 1; }
+  11% { left: 22.4%; opacity: 1; }
+  14% { left: 61%; opacity: 0; }
+  52% { left: 61%; opacity: 0.8; }
+  54% { left: 60.7%; opacity: 0.8; }
+  56% { left: 83%; opacity: 0; }
+  91% { left: 83%; opacity: 0.6; }
+  93% { opacity: 0; }
+}
+.beamfx { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; mix-blend-mode: screen; filter: blur(1.5px); animation: phase-in 2.5s 1.5s ease both; }
+/* changeover cue mark, top right, the way a projectionist would see it */
+.cuemark {
+  position: absolute;
+  right: 120px;
+  top: 90px;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  z-index: 6;
+  background: radial-gradient(circle, #111 0 46%, #e9dcc0 50% 62%, transparent 66%);
+  opacity: 0;
+  animation: cuemark 1.2s 0.15s steps(1) both;
+}
+@keyframes cuemark {
+  0%, 18%, 50%, 68% { opacity: 0.9; }
+  17%, 49%, 67%, 100% { opacity: 0; }
+}
 .grain {
   position: absolute;
   inset: -50%;
@@ -389,10 +435,11 @@
   from { opacity: 0; transform: translateY(50px); }
 }
 .billing .after { animation-delay: 2.7s; display: inline-block; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.22em; font-size: 28px; font-weight: 700; color: var(--night); background: var(--gold); padding: 6px 18px; border-radius: 6px; }
-.billing h2 { animation: none; margin: 30px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 176px; line-height: 0.88; color: var(--cream); text-shadow: 0 8px 0 rgba(0, 0, 0, 0.45); text-wrap: balance; }
-.billing .starring { animation-delay: 3.5s; margin: 44px 0 0; font-style: italic; font-size: 52px; color: var(--ink-soft); }
+.billing h2 { animation: none; margin: 30px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 150px; line-height: 0.88; color: var(--cream); text-shadow: 0 8px 0 rgba(0, 0, 0, 0.45); text-wrap: balance; }
+.billing .tagline { animation-delay: 3.4s; margin: 26px 0 0; font-style: italic; font-size: 44px; line-height: 1.2; color: var(--cream); max-width: 900px; }
+.billing .starring { animation-delay: 3.7s; margin: 36px 0 0; font-style: italic; font-size: 52px; color: var(--ink-soft); }
 .billing .starring b { display: block; font-style: normal; font-weight: 600; font-size: 84px; line-height: 1.05; color: var(--gold-2); }
-.billing .release { animation-delay: 3.9s; margin: 40px 0 0; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.16em; font-size: 30px; color: var(--ink-soft); }
+.billing .release { animation-delay: 4.1s; margin: 40px 0 0; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.16em; font-size: 30px; color: var(--ink-soft); }
 .billing .release b { color: var(--cream); }
 
 /* --------------------------------------------------------- curtain call */
@@ -460,4 +507,6 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .bigposter, .foil, .spot { animation-name: phase-in; animation-iteration-count: 1; }
+  .phase.weave { animation: phase-in 0.7s ease both; }
+  .damage { display: none; }
 }

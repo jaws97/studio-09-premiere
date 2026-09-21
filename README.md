@@ -19,6 +19,10 @@ npm run dev
 
 **PIN:** set `HOST_PIN` in `.env.local` (required in production). In development it falls back to `0909`.
 
+**Rehearse without a crowd:** `npm run rehearse` simulates 100 guests arriving, tearing tickets, leaving messages and applauding (open `/screen` first; try `-- --guests 150 --arrive 60`). Reset from `/host` afterwards.
+
+**Announcer:** lines live in `src/data/vo.ts`; `/host/script` is the recording sheet. Drop takes into `public/media/vo/<id>.mp3` — until then the browser voice stands in.
+
 **Rehearse on real phones:** run the dev server, then open `http://<laptop-ip>:3000/ticket` on a phone on the same Wi-Fi.
 
 ## How it fits together

@@ -10,6 +10,8 @@ export type Film = {
   source: string;
   /** day of September */
   day: number;
+  /** poster tagline; also the announcer's line. Placeholder office humour — swap in real inside jokes. */
+  tagline: string;
   tier: PosterTier;
   poster?: string;
   clip?: string;
@@ -46,6 +48,36 @@ const raw: [title: string, star: string, source: string, day: number][] = [
   ["Abhi-tasia", "Abhijit Prasad", "Fantasia", 30],
 ];
 
+const taglines = [
+  "The whole ocean is out searching. Try the coffee machine.",
+  "When the office empties, the real work comes alive.",
+  "Never wished on a star. Filed a ticket and followed up.",
+  "Seven stand-ups a week. Still the fairest of them all.",
+  "Saving the sprint again, in a cape HR hasn't approved.",
+  "A roadmap that goes further than the org chart.",
+  "We don't talk about the backlog.",
+  "Anyone can code. Not everyone should cook.",
+  "On a scale of one to ten, how would you rate your deploy?",
+  "Eighteen years of unread email. One very long thread.",
+  "Family means nobody gets left off the invite.",
+  "Three wishes. All of them spent on better Wi-Fi.",
+  "Change your fate. Or at least your password.",
+  "Down the rabbit hole. Back in time for the three o'clock.",
+  "Wanted to be where the people are. So, finally, unmuted.",
+  "Anyone can be anything. Even on time.",
+  "Scares because of cares. Mostly about deadlines.",
+  "Never grew up. The to-do list did.",
+  "Do not disturb. One hundred years, minimum.",
+  "Five emotions. One Monday.",
+  "Everything the projector light touches is the kingdom.",
+  "Built for speed. The build server is not.",
+  "Every status update, the nose stays exactly the same length.",
+  "Threw off the groove. Then owned it.",
+  "Home by midnight. The release had other plans.",
+  "Twice the mischief. Half the paperwork.",
+  "One sorcerer's hat. Too many brooms. Flawless finale."
+];
+
 const slugify = (s: string) =>
   s.toLowerCase().replace(/['’.,]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -56,6 +88,7 @@ export const films: Film[] = raw.map(([title, star, source, day], i) => ({
   star,
   source,
   day,
+  tagline: taglines[i],
   // Until a photo arrives everyone is a "mystery billing" poster.
   tier: "C",
 }));

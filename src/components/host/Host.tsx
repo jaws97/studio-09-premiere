@@ -2,7 +2,13 @@
 
 import { useEffect, useState } from "react";
 import { films, pad2 } from "@/data/season";
-import { PHASES, PHASE_LABEL, SEATS, useShow } from "@/lib/show";
+import { PHASES, PHASE_LABEL, SEATS, useShow, type AnnounceCue } from "@/lib/show";
+
+const ANNOUNCE: [AnnounceCue, string][] = [
+  ["doors", "“Welcome… tickets ready”"],
+  ["seats", "“Please take your seats”"],
+  ["premieres", "“Tonight's premieres…”"],
+];
 
 type Queue = {
   wishes: { id: string; name: string; text: string }[];
@@ -70,6 +76,18 @@ export function Host() {
               {pad2(f.no)}
             </button>
           ))}
+        </div>
+      </section>
+
+      <section>
+        <h2>Announcer</h2>
+        <div className="row">
+          {ANNOUNCE.map(([cue, label]) => (
+            <button type="button" key={cue} onClick={() => dispatch({ type: "announce", cue })}>
+              {label}
+            </button>
+          ))}
+          <a href="/host/script">Announcer script &amp; recording sheet →</a>
         </div>
       </section>
 

@@ -303,7 +303,17 @@
 
 /* -------------------------------------------------------------- curtain */
 .curtainup { position: absolute; inset: 0; display: grid; place-items: center; background: radial-gradient(ellipse at 50% 40%, #2a1512, var(--night) 70%); }
-.season-card { text-align: center; font-family: var(--display); text-transform: uppercase; }
+/* the bare screen behind the curtain, just catching the projector's first light */
+.blank-screen { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, #2b2622, #0b0908 75%); animation: lamp 2.6s 1.4s ease-in both; }
+@keyframes lamp {
+  from { filter: brightness(0.25); }
+  60% { filter: brightness(0.5); }
+  64% { filter: brightness(1.5); }
+  70% { filter: brightness(0.8); }
+  to { filter: brightness(1.25); }
+}
+.season-card { position: relative; animation: bill-in 1.2s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  text-align: center; font-family: var(--display); text-transform: uppercase; }
 .season-card span { display: block; font-size: 38px; letter-spacing: 0.4em; color: var(--gold); font-weight: 700; }
 .season-card b { display: block; font-size: 210px; line-height: 0.9; font-weight: 900; color: var(--cream); margin: 20px 0 30px; text-shadow: 0 8px 0 rgba(0, 0, 0, 0.4); }
 .season-card em { font-family: var(--serif); text-transform: none; font-size: 46px; color: var(--ink-soft); }

@@ -39,10 +39,29 @@ const FILE = path.join(DIR, "show.json");
 const PHOTO_DIR = path.join(DIR, "photos");
 const EXT: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
+/** In-memory state, kept on globalThis so it survives dev hot reloads. Only data lives here, never code. */
+type Mem = { data: Data | null; loading: Promise<Data> | null; saveTimer: NodeJS.Timeout | null };
+
 class FileStore implements ShowStore {
-  private data: Data | null = null;
-  private loading: Promise<Data> | null = null;
-  private saveTimer: NodeJS.Timeout | null = null;
+  constructor(private mem: Mem) {}
+  private get data() {
+    return this.mem.data;
+  }
+  private set data(d: Data | null) {
+    this.mem.data = d;
+  }
+  private get loading() {
+    return this.mem.loading;
+  }
+  private set loading(l: Promise<Data> | null) {
+    this.mem.loading = l;
+  }
+  private get saveTimer() {
+    return this.mem.saveTimer;
+  }
+  private set saveTimer(t: NodeJS.Timeout | null) {
+    this.mem.saveTimer = t;
+  }
 
   private load(): Promise<Data> {
     if (this.data) return Promise.resolve(this.data);
@@ -196,6 +215,7 @@ class FileStore implements ShowStore {
   }
 }
 
-// one instance per process, surviving dev HMR
-const g = globalThis as unknown as { __studio09Store?: ShowStore };
-export const store: ShowStore = (g.__studio09Store ??= new FileStore());
+// One copy of the data per process. The store object itself is rebuilt on every module load, so a hot
+// reload picks up new logic (phase order, seat rules) instead of running stale code against live state.
+const g = globalThis as unknown as { __studio09Mem?: Mem };
+export const store: ShowStore = new FileStore((g.__studio09Mem ??= { data: null, loading: null, saveTimer: null }));

@@ -1,10 +1,16 @@
 /** Show state shared by server and client. No secrets in here: it is served publicly. */
 
+/**
+ * Run of show. The opening plays as one piece: the curtain parts on a dark
+ * screen, then leader → ident → title card run on from each other, and the
+ * title card waits for the host.
+ */
 export const PHASES = [
   "doors",
+  "curtain",
   "leader",
   "ident",
-  "curtain",
+  "title",
   "trailer",
   "premieres",
   "curtaincall",
@@ -14,9 +20,10 @@ export type Phase = (typeof PHASES)[number];
 
 export const PHASE_LABEL: Record<Phase, string> = {
   doors: "Doors open",
-  leader: "Film leader 5-4-3-2-1",
-  ident: "Studio 09 ident",
   curtain: "Curtain up",
+  leader: "Film leader 5-4-3-2-1",
+  ident: "Party People ident",
+  title: "Season title card",
   trailer: "Season trailer",
   premieres: "The premieres",
   curtaincall: "Curtain call",

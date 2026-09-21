@@ -12,14 +12,15 @@ Event night: **7 Oct 2026**. 27 September-birthday stars. The big screen is the 
 | `/join` | guest phone | After admission: Bravo button, leave a credit message, paparazzi upload |
 
 ## Run of show (`phase` = one DB row, broadcast to all screens)
-1. **doors** — marquee + giant QR + seat map; each tear lights a seat and announces "Now seated…"; paparazzi wall cycles
-2. **leader** — "tap to start" → 5-4-3-2-1 film leader with beeps
-3. **ident** — Studio 09 logo sting (Higgsfield video + audio)
-4. **curtain** — velvet curtain opens
-5. **trailer** — 45–60s season trailer
-6. **premieres** — 27 × ~25s: clapperboard snap (scene = birthday date) → poster reveal → living poster / parallax+foil → announcer line → applause window
-7. **curtain-call** — live applause meter from every phone; confetti at peak
-8. **credits** — joke roles for all 27 + approved guest messages + post-credits "Cake in the lobby"
+1. **doors** — marquee + giant QR + seat map; each tear lights a seat and announces "Now seated…"; paparazzi strip
+2. **curtain** — house lights down, velvet curtain parts on a dark screen as the projector lamp strikes; runs on automatically
+3. **leader** — 5-4-3-2-1 film leader with beeps and projector whirr; runs on automatically
+4. **ident** — the team's own "Party People" ident film (`public/media/ident.mp4`, 15s, with sound); runs on automatically
+5. **title** — "Studio 09 presents · The September Season" card + announcer; waits for the host
+6. **trailer** — green band ("approved for all birthday audiences by Party People") → 45–60s season trailer
+7. **premieres** — 27 × ~25s: clapperboard snap (scene = birthday date) → poster reveal → tagline + announcer line → applause window
+8. **curtain-call** — live applause meter from every phone; confetti + "standing ovation" at peak
+9. **credits** — cast, joke crew roles, approved guest messages, post-credits "Cake in the lobby"
 
 ## Wow factors (ranked, in scope)
 1. Seat map + "Now seated" reacting live to ticket tears
@@ -98,6 +99,8 @@ Projector(s) + speakers available; lights can be dimmed (assume dim, not blackou
 **Slice 3 (Sep 21) — done:** show state moved server-side behind a `ShowStore` seam (`src/server/store.ts`, file-backed in `.data/`) with route handlers under `/api` · `/screen` + `/host` poll `/api/show` (~450ms, rev-gated); guest phones never subscribe, they only POST · PIN gate (`HOST_PIN`, httpOnly cookie) on `/screen`, `/host` and host APIs — verified the embargoed titles are absent from guest-page bundles · server-assigned unique seats (cast keep 1–27, balcony overflow past 120) · local-first admit with retry · `/join`: batched bravo button, 80-char credit message, client-compressed paparazzi upload · host moderation queue (nothing reaches the screen unapproved) · paparazzi strip on doors, guest wishes in credits · synthesised sound for every phase (`src/lib/sfx.ts`) + "click to arm" overlay + host mute · premiere polish (searchlights, floating foil poster, staggered title words) · production build passes · private repo: github.com/jaws97/studio-09-premiere.
 
 **Slice 4 (Sep 21) — done:** tagline per film (placeholder office humour, pronoun-free — swap in real inside jokes in `src/data/season.ts`) · announcer script in `src/data/vo.ts` (8 show cues + 27 premiere intros) with playback in `src/lib/vo.ts`: plays `public/media/vo/<id>.mp3` when present, otherwise the browser's speech voice reads the line so rehearsals already have an emcee · host-fired announcer cues ("tickets ready", "take your seats", "tonight's premieres") · `/host/script` recording sheet listing every line and its filename · film atmosphere on `/screen`: gate weave, drifting scratches, changeover cue mark on each premiere, projector beam with dust motes (quarter-res canvas) · applause meter now scales to the house (needle pins at ~1.5 claps/s per seated guest) · balcony count when arrivals pass 120 · `npm run rehearse` load/rehearsal script — **100 simulated guests: 0 failures, 0 duplicate seats, p50 30ms / p95 106ms** against the dev server.
+
+**Slice 5 (Sep 21) — done:** walked the organiser through /screen in the browser · run of show reordered so the curtain opens before anything is projected (curtain → leader → ident → title auto-chain) · team ident film wired into the ident phase · first three generated no-face posters (01, 08, 21; `nano_banana_pro` 2k = **2 credits each**, measured) with HTML titles over the lower third · titles: "The Little Mermila", "Inside Anand"; a few taglines now play on name meanings · dev fix: the store singleton keeps only data across hot reloads, not code.
 
 **Not yet seen by human eyes:** the PIN-gated `/screen` and `/host` visuals added in slice 3 (arm overlay, paparazzi strip, foil/searchlights, beam/scratches/cue mark, taglines, moderation queue, announcer buttons, /host/script) — the APIs behind them are tested, the pixels are not. All sound cues and the announcer fallback voice are untested by ear.
 

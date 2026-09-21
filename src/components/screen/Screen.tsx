@@ -69,11 +69,14 @@ export function Screen() {
         {ready && (
           <div className={`phase${FILM_PHASES.has(state.phase) ? " weave" : ""}`} key={state.phase}>
             {state.phase === "doors" && <Doors seated={state.seated} photos={state.photos} />}
+            {state.phase === "curtain" && (
+              <CurtainUp onDone={() => void dispatch({ type: "next", ifPhase: "curtain" })} />
+            )}
             {state.phase === "leader" && <Leader onDone={() => void dispatch({ type: "next", ifPhase: "leader" })} />}
             {state.phase === "ident" && (
               <Ident muted={state.muted} onDone={() => void dispatch({ type: "next", ifPhase: "ident" })} />
             )}
-            {state.phase === "curtain" && <CurtainUp />}
+            {state.phase === "title" && <TitleCard />}
             {state.phase === "trailer" && <Trailer />}
             {state.phase === "premieres" && <Premiere key={state.premiere} film={films[state.premiere]} />}
             {state.phase === "curtaincall" && <CurtainCall state={state} />}
@@ -99,7 +102,7 @@ export function Screen() {
 }
 
 /** phases that are "on film": they get gate weave, scratches and dust */
-const FILM_PHASES = new Set<string>(["leader", "ident", "trailer", "premieres", "credits"]);
+const FILM_PHASES = new Set<string>(["leader", "ident", "title", "trailer", "premieres", "credits"]);
 
 /**
  * Projector beam with dust motes drifting through it. Drawn at quarter
@@ -371,22 +374,33 @@ function IdentCard() {
 
 /* ---------------------------------------------------------------- curtain */
 
-function CurtainUp() {
+/** House lights down, curtains part on a dark screen, and the projector takes over. */
+function CurtainUp({ onDone }: { onDone: () => void }) {
   const [open, setOpen] = useState(false);
   useCue(sfx.swoosh, 900);
-  useCue(() => say(showCues.curtain), 2200);
+  useCue(onDone, 3600);
   useEffect(() => {
     const t = setTimeout(() => setOpen(true), 900);
     return () => clearTimeout(t);
   }, []);
   return (
     <div className="curtainup">
+      <div className="blank-screen" />
+      <Curtains open={open} />
+    </div>
+  );
+}
+
+function TitleCard() {
+  useCue(() => say(showCues.curtain), 700);
+  return (
+    <div className="curtainup">
+      <Beam />
       <div className="season-card">
         <span>Studio 09 presents</span>
         <b>The September Season</b>
         <em>Twenty-seven features. Not a single supporting role.</em>
       </div>
-      <Curtains open={open} />
     </div>
   );
 }
@@ -400,7 +414,7 @@ function Trailer() {
       {/* <video src="/media/trailer.mp4" autoPlay /> once the trailer is cut */}
       <div className="greenband">
         <b>The following preview has been approved for all birthday audiences</b>
-        <span>by the Studio 09 cake committee</span>
+        <span>by Party People</span>
       </div>
     </div>
   );

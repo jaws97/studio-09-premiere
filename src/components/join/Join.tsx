@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Bulbs } from "@/components/Bulbs";
 import { buzz } from "@/lib/rip";
-import { numOf, rowOf } from "@/lib/show-core";
-import { useTicket, type TicketData } from "@/lib/ticket";
+import { useTicket } from "@/lib/ticket";
 
 /**
  * The guest's second screen. Deliberately does NOT subscribe to the show:
@@ -29,83 +27,14 @@ export function Join() {
     );
   return (
     <main className="join">
-      <div className="frame j-marquee">
-        <Bulbs step={22} />
-        <h1>
-          Studio 09<span>You&apos;re in the house</span>
-        </h1>
-      </div>
-      <Stub ticket={ticket!} />
-      <Programme />
+      <header>
+        <b>Studio 09</b>
+        <span>{name} · in the house</span>
+      </header>
       <Bravo />
-      <Paparazzi name={name} />
       <Wish name={name} />
-      <HouseRules />
+      <Paparazzi name={name} />
     </main>
-  );
-}
-
-const pad2 = (n: number) => String(n).padStart(2, "0");
-
-/** The half of the ticket the guest keeps. Nothing here gives the evening's surprise away. */
-function Stub({ ticket }: { ticket: TicketData }) {
-  return (
-    <section className={`j-stub${ticket.star ? " cast" : ""}`}>
-      <div className="j-stub-main">
-        <small>Admit one</small>
-        <b>{ticket.name}</b>
-        {ticket.star ? (
-          <em>★ You&apos;re in tonight&apos;s cast. Act surprised.</em>
-        ) : (
-          <em>Opening night · 7 October</em>
-        )}
-      </div>
-      <div className="j-stub-seat">
-        <div>
-          <small>Row</small>
-          <b>{rowOf(ticket.seat)}</b>
-        </div>
-        <div>
-          <small>Seat</small>
-          <b>{pad2(numOf(ticket.seat))}</b>
-        </div>
-      </div>
-      {ticket.admittedAt != null && <span className="j-stamp">Admitted</span>}
-    </section>
-  );
-}
-
-const programme: [string, string][] = [
-  ["Doors", "Find your seat. Strike a pose for the paparazzi wall and leave a line for the credits."],
-  ["Curtain up", "House lights down. For once, keep your phone out."],
-  ["The September Season", "Twenty-seven premieres, one by one. No spoilers from us."],
-  ["Curtain call", "The Bravo button below drives the needle on the big screen. Bring the house down."],
-  ["End credits", "Your messages roll. Stay for the post-credits scene: it's cake."],
-];
-
-function Programme() {
-  return (
-    <section className="j-card">
-      <h2>Tonight&apos;s programme</h2>
-      <ol className="j-programme">
-        {programme.map(([title, text]) => (
-          <li key={title}>
-            <b>{title}</b>
-            <span>{text}</span>
-          </li>
-        ))}
-      </ol>
-    </section>
-  );
-}
-
-function HouseRules() {
-  return (
-    <footer className="j-rules">
-      <b>House rules</b>
-      <p>Applaud loudly. Heckle kindly. Popcorn is a food group tonight.</p>
-      <p>What happens at Studio 09 ends up in the credits.</p>
-    </footer>
   );
 }
 

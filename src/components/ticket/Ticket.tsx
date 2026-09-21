@@ -10,68 +10,15 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { buzz, ripFinish, ripTick, unlockRip } from "@/lib/rip";
 import { numOf, rowOf } from "@/lib/show-core";
-import { createStore } from "@/lib/store";
+import { post, saveTicket, syncAdmit, useTicket, type TicketData } from "@/lib/ticket";
 
 const HOLES = 22;
 const COMMIT_AT = 0.6;
 
-type TicketData = {
-  id: string;
-  name: string;
-  seat: number;
-  star: boolean;
-  admittedAt?: number;
-  /** the server has recorded the admission */
-  synced?: boolean;
-};
-
-const KEY = "studio09-ticket";
-const ticketStore = createStore<TicketData | null | undefined>(
-  undefined,
-  (set) => {
-    try {
-      const raw = localStorage.getItem(KEY);
-      set(raw ? (JSON.parse(raw) as TicketData) : null);
-    } catch {
-      set(null);
-    }
-  },
-);
-function saveTicket(t: TicketData | null) {
-  ticketStore.set(t);
-  try {
-    if (t) localStorage.setItem(KEY, JSON.stringify(t));
-    else localStorage.removeItem(KEY);
-  } catch {}
-}
-
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
-const post = (url: string, body: unknown) =>
-  fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-
-/**
- * The tear is local-first: it always plays, and the admit call is retried
- * until the server has it, so bad venue Wi-Fi can delay the big screen but
- * never block the door.
- */
-async function syncAdmit() {
-  const t = ticketStore.get();
-  if (!t?.admittedAt || t.synced) return;
-  try {
-    const res = await post("/api/admit", { id: t.id });
-    // 404 = the show was reset since this ticket was printed; nothing left to sync
-    if (res.ok || res.status === 404) saveTicket({ ...t, synced: true });
-  } catch {}
-}
-
 export function TicketPage({ cast }: { cast: string[] }) {
-  const ticket = ticketStore.use();
-  useEffect(() => {
-    void syncAdmit();
-    const t = setInterval(syncAdmit, 4000);
-    return () => clearInterval(t);
-  }, []);
+  const ticket = useTicket();
   if (ticket === undefined) return <main className="ticket-page" />;
   return (
     <main className="ticket-page">

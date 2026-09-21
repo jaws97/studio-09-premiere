@@ -119,6 +119,12 @@ export class SupabaseStore implements ShowStore {
     throw new Error("[supabase] issueTicket: could not find a free seat");
   }
 
+  async getTicket(ticketId: string) {
+    const { data, error } = await this.db.from("s09_tickets").select().eq("id", ticketId).maybeSingle();
+    if (error) this.fail("getTicket", error);
+    return data ? toTicket(data as TicketRow) : null;
+  }
+
   async admit(ticketId: string) {
     // only the request that flips admitted_at from null announces the guest, so double taps seat nobody twice
     const at = new Date();

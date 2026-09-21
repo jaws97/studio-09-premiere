@@ -21,6 +21,8 @@ export interface ShowStore {
   getShow(): Promise<ShowState>;
   host(action: HostAction): Promise<ShowState>;
   issueTicket(name: string): Promise<Ticket>;
+  /** null once the show has been reset: phones use this to notice their ticket is void */
+  getTicket(ticketId: string): Promise<Ticket | null>;
   admit(ticketId: string): Promise<Ticket | null>;
   clap(n: number): Promise<void>;
   addWish(name: string, text: string): Promise<void>;
@@ -142,6 +144,10 @@ class FileStore implements ShowStore {
     d.tickets.push(ticket);
     this.touch(d);
     return ticket;
+  }
+
+  async getTicket(ticketId: string) {
+    return (await this.load()).tickets.find((x) => x.id === ticketId) ?? null;
   }
 
   async admit(ticketId: string) {

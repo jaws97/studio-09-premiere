@@ -2,25 +2,17 @@
 
 import { useEffect, useRef, useState } from "react";
 import { buzz } from "@/lib/rip";
-import { createStore } from "@/lib/store";
+import { useTicket } from "@/lib/ticket";
 
 /**
  * The guest's second screen. Deliberately does NOT subscribe to the show:
  * a hundred phones polling would be the heaviest thing in the building.
- * Phones only ever send.
+ * Phones only ever send (plus one ticket check when the page opens).
  */
-const guestName = createStore<string | null | undefined>(undefined, (set) => {
-  try {
-    const raw = localStorage.getItem("studio09-ticket");
-    set(raw ? ((JSON.parse(raw) as { name?: string }).name ?? null) : null);
-  } catch {
-    set(null);
-  }
-});
-
 export function Join() {
-  const name = guestName.use();
-  if (name === undefined) return <main className="join" />;
+  const ticket = useTicket();
+  if (ticket === undefined) return <main className="join" />;
+  const name = ticket?.name ?? null;
   if (name === null)
     return (
       <main className="join">

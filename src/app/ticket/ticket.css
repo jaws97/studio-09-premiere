@@ -60,7 +60,12 @@
   --paper: #f3e7cf;
   --paper-ink: #1c120e;
   --accent: var(--velvet);
-  --zig: 9px;
+  /* perforation: round punched holes on a fixed pitch, half-moon notches at both ends */
+  --pitch: 14px;
+  --hole: 3.2px;
+  --notch: 9px;
+  /* fine paper grain, rendered once as a tiny tiled SVG */
+  --grain: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .25  0 0 0 0 .17  0 0 0 0 .08  0 0 0 .11 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   width: min(100%, 360px);
   display: flex;
   flex-direction: column;
@@ -81,23 +86,46 @@
   from { transform: translateY(-110%) rotate(-3deg); }
 }
 .tk-bodywrap { position: relative; z-index: 2; }
+.tk-holeback { position: absolute; left: var(--notch); right: var(--notch); bottom: 0; height: 8px; background: var(--night); z-index: 0; }
 .tk-body,
 .tk-stub {
   position: relative;
   color: var(--paper-ink);
   background:
-    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.025) 0 1px, transparent 1px 3px),
+    var(--grain),
+    /* paper is never perfectly flat: a faint sheen across the sheet */
+    linear-gradient(100deg, rgba(255, 255, 255, 0.14), transparent 35%, rgba(0, 0, 0, 0.05) 100%),
     var(--paper);
 }
 .tk-body {
   z-index: 2;
-  padding: 20px 22px calc(26px + var(--zig));
+  padding: 20px 22px 30px;
   border-radius: 16px 16px 0 0;
   border-top: 10px solid var(--accent);
-  /* torn-paper zig-zag along the bottom edge */
+  /* the sheet dips slightly into the perforation crease */
+  box-shadow: inset 0 -12px 10px -10px rgba(60, 35, 10, 0.28);
   mask:
-    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / calc(2 * var(--zig)) var(--zig) repeat-x,
-    linear-gradient(#000 0 0) top / 100% calc(100% - var(--zig)) no-repeat;
+    radial-gradient(circle at 50% 100%, #0000 calc(var(--hole) - 0.5px), #000 var(--hole)) 50% 0 / var(--pitch) 100% repeat-x,
+    radial-gradient(circle at 0 100%, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+/* what real tickets print along the perforation */
+.tk-body::after {
+  content: "TEAR HERE  \2702  TEAR HERE  \2702  TEAR HERE  \2702  TEAR HERE  \2702  TEAR HERE  \2702  TEAR HERE  \2702  TEAR HERE";
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 9px;
+  overflow: hidden;
+  white-space: pre;
+  text-align: center;
+  font-family: var(--display);
+  font-size: 7px;
+  letter-spacing: 0.3em;
+  color: var(--paper-ink);
+  opacity: 0.38;
 }
 .tk-top { display: flex; justify-content: space-between; align-items: center; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.2em; font-size: 12px; font-weight: 700; color: var(--accent); }
 .tk-top em { font-style: normal; background: var(--accent); color: var(--paper); padding: 3px 9px; border-radius: 999px; letter-spacing: 0.14em; }
@@ -130,67 +158,87 @@
   from { opacity: 0; transform: rotate(-14deg) scale(2.6); }
 }
 
-/* the stub tucks under the body by one zig so there is no gap while whole */
-.tk-stub {
+/* the wrapper swings and falls; the section inside carries the punched edge */
+.tk-stubwrap {
+  position: relative;
   z-index: 1;
-  margin-top: calc(-1 * var(--zig));
-  padding: calc(18px + var(--zig)) 22px 18px;
+  /* 1px under the body so no hairline of background shows along the seam */
+  margin-top: -1px;
+  transform-origin: 100% 0;
+  will-change: transform;
+}
+/* once torn the stub falls out of flow so the welcome text closes the gap */
+.tk.torn .tk-stubwrap { position: absolute; left: 0; right: 0; pointer-events: none; }
+.tk-stub {
+  padding: 22px 22px 18px;
   border-radius: 0 0 16px 16px;
   display: grid;
   grid-template-columns: 1fr auto;
   gap: 12px;
   align-items: center;
-  transform-origin: 100% 0;
-  will-change: transform;
+  box-shadow: inset 0 12px 10px -10px rgba(60, 35, 10, 0.28);
   mask:
-    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / calc(2 * var(--zig)) var(--zig) repeat-x,
-    linear-gradient(#000 0 0) bottom / 100% calc(100% - var(--zig)) no-repeat;
+    radial-gradient(circle at 50% 0, #0000 calc(var(--hole) - 0.5px), #000 var(--hole)) 50% 0 / var(--pitch) 100% repeat-x,
+    radial-gradient(circle at 0 0, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle at 100% 0, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
 }
-/* once torn the stub falls out of flow so the welcome text closes the gap */
-.tk.torn .tk-stub { position: absolute; left: 0; right: 0; pointer-events: none; }
 .tk-stub-txt b { display: block; font-family: var(--display); font-weight: 900; font-size: 50px; line-height: 0.95; }
 .tk-stub-txt span { font-family: var(--display); text-transform: uppercase; letter-spacing: 0.14em; font-size: 11px; color: #6e5a3a; }
 .tk-qr { width: 92px; height: 92px; }
 
-/* ---------- seam: the usher's swipe zone ---------- */
+/*
+ * Torn-paper fibres. A thin strip of pale pulp along each side of the perforation, pushed around by the
+ * #tk-rough displacement filter so the edge is ragged rather than vector-clean. The filter sits on the
+ * wrapper and the hole mask on the child, because a mask on the same element would trim the fibres off.
+ */
+.tk-fibre { position: absolute; left: 0; right: 0; height: 9px; z-index: 3; pointer-events: none; filter: url(#tk-rough); }
+.tk-fibre.below { bottom: 0; }
+.tk-fibre.above { top: 0; }
+.tk-fibre i { position: absolute; inset: 0; }
+.tk-fibre.below i {
+  background: linear-gradient(180deg, transparent 45%, color-mix(in srgb, var(--paper) 55%, #fff) 100%);
+  mask:
+    radial-gradient(circle at 50% 100%, #0000 calc(var(--hole) - 0.5px), #000 var(--hole)) 50% 0 / var(--pitch) 100% repeat-x,
+    radial-gradient(circle at 0 100%, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle at 100% 100%, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.tk-fibre.above i {
+  background: linear-gradient(0deg, transparent 45%, color-mix(in srgb, var(--paper) 55%, #fff) 100%);
+  mask:
+    radial-gradient(circle at 50% 0, #0000 calc(var(--hole) - 0.5px), #000 var(--hole)) 50% 0 / var(--pitch) 100% repeat-x,
+    radial-gradient(circle at 0 0, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat,
+    radial-gradient(circle at 100% 0, #0000 calc(var(--notch) - 0.5px), #000 var(--notch)) 0 0 / 100% 100% no-repeat;
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+
+/* ---------- seam: the usher's swipe zone, centred on the perforation ---------- */
 .tk-seam {
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   left: 0;
   right: 0;
-  /* centred on the perforation: the middle of the body's zig-zag edge */
-  bottom: calc(var(--zig) / 2 - 32px);
+  bottom: -32px;
   height: 64px;
   touch-action: none;
   cursor: grab;
+  outline: none;
 }
-.tk-seam::before {
-  content: "";
-  position: absolute;
-  left: 10px;
-  right: 10px;
-  top: 50%;
-  border-top: 3px dotted rgba(28, 18, 14, 0.55);
-}
-.tk-gap {
-  position: absolute;
-  left: 0;
-  top: 50%;
-  height: 8px;
-  margin-top: -3px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.15));
-  border-radius: 0 6px 6px 0;
-  pointer-events: none;
-}
+.tk-seam:focus-visible .tk-handle { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--gold-2); }
+/* a small pull-tab rather than a big button: it marks where the tear has got to */
 .tk-handle {
   position: absolute;
   top: 50%;
-  width: 34px;
-  height: 34px;
-  margin: -17px 0 0 -4px;
+  width: 30px;
+  height: 30px;
+  margin: -15px 0 0 -6px;
   border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 0 4px var(--paper), 0 4px 10px rgba(0, 0, 0, 0.5);
+  background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--accent) 70%, #fff), var(--accent) 60%);
+  box-shadow: 0 0 0 3px var(--paper), 0 3px 8px rgba(0, 0, 0, 0.45);
   pointer-events: none;
 }
 .tk-handle::after {
@@ -202,7 +250,11 @@
   color: var(--paper);
   font-family: var(--display);
   font-weight: 900;
-  font-size: 20px;
+  font-size: 17px;
+}
+.tk-handle.nudge { animation: nudge 1.4s ease-in-out infinite; }
+@keyframes nudge {
+  50% { transform: translateX(10px); }
 }
 
 /* ---------- below the ticket ---------- */
@@ -218,7 +270,7 @@
 .tk-alt.quiet { box-shadow: none; color: var(--ink-soft); text-transform: none; letter-spacing: 0; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 16px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tk-paper, .tk-stamp, .pulse-hint { animation: none; }
+  .tk-paper, .tk-stamp, .pulse-hint, .tk-handle.nudge { animation: none; }
 }
 
 a.tk-alt { display: inline-block; text-decoration: none; background: var(--gold); color: var(--night); box-shadow: 0 6px 0 var(--gold-shadow); font-size: 16px; padding: 12px 22px; margin-top: 6px; }

@@ -2,28 +2,51 @@
 
 /**
  * Paper-rip sound synthesised from filtered noise, so the tear works before
- * any audio assets exist. Must be unlocked from a user gesture (pointerdown).
+ * any audio assets exist.
+ *
+ * Phones only let a page start audio after a COMPLETED gesture (tap / touchend),
+ * and the audio hardware then takes a few hundred ms to wake. Unlocking at the
+ * start of the swipe is too late: the first half of the tear would be silent.
+ * So we unlock on the earliest tap we can get (`armRipOnFirstTouch`, and the
+ * "Print my ticket" tap) and play a silent sample to warm the output up.
  */
 let ctx: AudioContext | null = null;
 let noise: AudioBuffer | null = null;
 
 export function unlockRip() {
-  if (ctx) {
-    if (ctx.state === "suspended") void ctx.resume();
-    return;
-  }
   try {
-    ctx = new AudioContext();
-    noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
-    const d = noise.getChannelData(0);
-    for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    if (!ctx) {
+      ctx = new AudioContext();
+      noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
+      const d = noise.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    if (ctx.state !== "running") void ctx.resume();
+    // one silent sample: wakes the audio hardware now instead of on the first perforation
+    const warm = ctx.createBufferSource();
+    warm.buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+    warm.connect(ctx.destination);
+    warm.start();
   } catch {
     ctx = null;
   }
 }
 
+/** Unlock on the first completed touch anywhere on the page, then stop listening. */
+export function armRipOnFirstTouch() {
+  const events = ["pointerup", "touchend", "click", "keydown"] as const;
+  const once = () => {
+    unlockRip();
+    events.forEach((e) => document.removeEventListener(e, once));
+  };
+  events.forEach((e) => document.addEventListener(e, once, { passive: true }));
+  return () => events.forEach((e) => document.removeEventListener(e, once));
+}
+
 function burst(duration: number, gain: number, freq: number) {
   if (!ctx || !noise) return;
+  // while suspended the clock is frozen: anything scheduled now would pile up and fire at once later
+  if (ctx.state !== "running") return void ctx.resume();
   const src = ctx.createBufferSource();
   src.buffer = noise;
   src.loopStart = Math.random() * 0.5;

@@ -8,17 +8,19 @@ import {
   useTransform,
 } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { buzz, ripFinish, ripTick, unlockRip } from "@/lib/rip";
+import { armRipOnFirstTouch, buzz, ripFinish, ripTick, unlockRip } from "@/lib/rip";
 import { numOf, rowOf } from "@/lib/show-core";
 import { post, saveTicket, syncAdmit, useTicket, type TicketData } from "@/lib/ticket";
 
-const HOLES = 22;
+/** distance between perforation holes in CSS px; must match --pitch in ticket.css */
+const PITCH = 14;
 const COMMIT_AT = 0.6;
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 export function TicketPage({ cast }: { cast: string[] }) {
   const ticket = useTicket();
+  useEffect(() => armRipOnFirstTouch(), []);
   if (ticket === undefined) return <main className="ticket-page" />;
   return (
     <main className="ticket-page">
@@ -43,6 +45,7 @@ function BoxOffice({ cast }: { cast: string[] }) {
   const issue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!ok) return;
+    unlockRip(); // this tap is the gesture that lets the rip sound play from the first perforation
     setState("busy");
     try {
       const res = await post("/api/ticket", { name });
@@ -85,25 +88,25 @@ function Ticket({ ticket }: { ticket: TicketData }) {
   const seamRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
   const lastHole = useRef(0);
+  const holes = useRef(22);
   const [hint, setHint] = useState(true);
 
-  // The stub hangs from the end that is still attached (the right).
-  const stubRotate = useTransform(progress, [0, 1], [0, -9]);
-  const stubY = useTransform(progress, [0, 1], [0, 10]);
-  const tornWidth = useTransform(progress, (p) => `${p * 100}%`);
+  // Paper stays joined ahead of the tear, so the stub hinges AT the tear point: everything already torn
+  // swings open to the left of it, everything still attached stays tucked against the body.
+  const stubRotate = useTransform(progress, [0, 1], [0, -10]);
+  const hinge = useTransform(progress, (p) => `${(p * 100).toFixed(1)}% 0%`);
   const handleLeft = useTransform(progress, (p) => `${p * 100}%`);
-  const gapGlow = useTransform(progress, [0, 0.15, 1], [0, 1, 1]);
 
   // Falling away after the tear completes.
   const dropY = useMotionValue(torn ? 900 : 0);
   const dropRotate = useMotionValue(torn ? -28 : 0);
   const dropOpacity = useMotionValue(torn ? 0 : 1);
   const rotate = useTransform(() => stubRotate.get() + dropRotate.get());
-  const y = useTransform(() => stubY.get() + dropY.get());
+  const y = dropY;
 
   useMotionValueEvent(progress, "change", (p) => {
     if (!dragging.current) return;
-    const hole = Math.floor(p * HOLES);
+    const hole = Math.floor(p * holes.current); // one tick and one buzz per real hole
     if (hole > lastHole.current) {
       lastHole.current = hole;
       ripTick();
@@ -146,6 +149,7 @@ function Ticket({ ticket }: { ticket: TicketData }) {
     // the tear has to start where the paper is still whole, not mid-ticket
     if (pAt(e.clientX) > progress.get() + 0.22) return;
     dragging.current = true;
+    holes.current = Math.max(8, Math.round(seamRef.current!.getBoundingClientRect().width / PITCH));
     setHint(false);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -164,7 +168,9 @@ function Ticket({ ticket }: { ticket: TicketData }) {
     }
   };
 
-  const tearByButton = () => {
+  // No visible button: the perforation itself is the control. Keyboard and switch users can still focus
+  // it and press Enter, Space or → to tear.
+  const tearByKey = () => {
     unlockRip();
     dragging.current = true; // so the perforation ticks play
     animate(progress, 1, { duration: 0.7, ease: "easeInOut" }).then(() => {
@@ -176,7 +182,16 @@ function Ticket({ ticket }: { ticket: TicketData }) {
   return (
     <div className={`tk${ticket.star ? " cast" : ""}${torn ? " torn" : ""}`}>
       <div className="tk-paper">
+        {/* roughens the perforated edges so torn paper shows fibres instead of a vector-clean cut */}
+        <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+          <filter id="tk-rough" x="-5%" y="-60%" width="110%" height="220%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.85 0.3" numOctaves="2" seed="7" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </svg>
         <div className="tk-bodywrap">
+          {/* dark backing so the punched holes read as holes even while the stub swings up behind them */}
+          <i className="tk-holeback" aria-hidden="true" />
           <section className="tk-body">
             <div className="tk-top">
               <span>Studio 09 presents</span>
@@ -209,31 +224,47 @@ function Ticket({ ticket }: { ticket: TicketData }) {
             )}
           </section>
 
+          <span className="tk-fibre below" aria-hidden="true">
+            <i />
+          </span>
           {!torn && (
             <div
               className="tk-seam"
               ref={seamRef}
+              role="slider"
+              tabIndex={0}
+              aria-label="Tear the ticket along the perforation"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
+                  e.preventDefault();
+                  tearByKey();
+                }
+              }}
               onPointerDown={onDown}
               onPointerMove={onMove}
               onPointerUp={onUp}
               onPointerCancel={onUp}
             >
-              <motion.i
-                className="tk-gap"
-                style={{ width: tornWidth, opacity: gapGlow }}
-              />
-              <motion.i className="tk-handle" style={{ left: handleLeft }} />
+              <motion.i className={`tk-handle${hint ? " nudge" : ""}`} style={{ left: handleLeft }} />
             </div>
           )}
         </div>
 
-        <motion.section
-          className="tk-stub"
-          style={{ rotate, y, opacity: dropOpacity }}
+        <motion.div
+          className="tk-stubwrap"
+          style={{ rotate, y, opacity: dropOpacity, transformOrigin: hinge }}
           aria-hidden={torn}
         >
-          <StubInner ticket={ticket} />
-        </motion.section>
+          <span className="tk-fibre above" aria-hidden="true">
+            <i />
+          </span>
+          <section className="tk-stub">
+            <StubInner ticket={ticket} />
+          </section>
+        </motion.div>
       </div>
 
       {torn ? (
@@ -252,9 +283,6 @@ function Ticket({ ticket }: { ticket: TicketData }) {
           <b className={hint ? "pulse-hint" : undefined}>
             Usher: swipe along the dotted line →
           </b>
-          <button type="button" className="tk-alt" onClick={tearByButton}>
-            Tear ticket
-          </button>
           <button
             type="button"
             className="tk-alt quiet"

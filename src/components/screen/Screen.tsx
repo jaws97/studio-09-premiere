@@ -399,7 +399,7 @@ function TitleCard() {
       <div className="season-card">
         <span>Studio 09 presents</span>
         <b>The September Season</b>
-        <em>Twenty-seven features. Not a single supporting role.</em>
+        <em>Twenty-seven features. Every one a leading role.</em>
       </div>
     </div>
   );

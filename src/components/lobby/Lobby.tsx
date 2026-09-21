@@ -120,7 +120,7 @@ export function Lobby({
         <div className="light l2" />
         <div className="rope" />
         <p>
-          <b>Studio 09</b>Twenty-seven headline acts. Not a single supporting role.
+          <b>Studio 09</b>Twenty-seven headline acts. Every one a leading role.
         </p>
       </div>
       <footer>Studio 09 · one night only.</footer>

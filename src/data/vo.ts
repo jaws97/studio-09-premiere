@@ -19,7 +19,7 @@ export const showCues = {
   },
   curtain: {
     id: "cue-curtain",
-    text: "Studio Oh Nine proudly presents, the September season. Twenty-seven features. Not a single supporting role.",
+    text: "Studio Oh Nine proudly presents, the September season. Twenty-seven features. Every one, a leading role.",
   },
   trailer: { id: "cue-trailer", text: "And now, a preview of this season's attractions." },
   premieres: { id: "cue-premieres", text: "Tonight's premieres. Hold your applause. Actually, don't." },

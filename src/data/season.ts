@@ -82,7 +82,8 @@ const taglines = [
  * Films whose poster art exists in public/posters as NN.webp (+ NN-sm.webp for
  * the lobby wall). The art carries no text: titles are laid over it in HTML.
  */
-const withPoster = new Set([1, 8, 21]);
+const withoutPoster = new Set([7, 10]); // blocked by the generator's content filter; prompts need rewording
+const withPoster = new Set(Array.from({ length: 27 }, (_, i) => i + 1).filter((n) => !withoutPoster.has(n)));
 
 const slugify = (s: string) =>
   s.toLowerCase().replace(/['’.,]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");

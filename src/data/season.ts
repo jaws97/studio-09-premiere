@@ -21,7 +21,7 @@ export type Film = {
 const raw: [title: string, star: string, source: string, day: number][] = [
   ["Finding Navaneetha", "Navaneetha Krishnan Suresh", "Finding Nemo", 2],
   ["Sai Story", "Harivenkata Sai CV", "Toy Story", 5],
-  ["Prathima and the Frog", "Prathima Kalegowda", "The Princess and the Frog", 5],
+  ["Prathimoana", "Prathima Kalegowda", "Moana", 5],
   ["Sneha White", "Sneha Sridharan", "Snow White", 5],
   ["The Incredible Gautham", "Gautham Krishnan", "The Incredibles", 6],
   ["To Ananth-inity and Beyond", "Ananthmoorthy Nayak", "Lightyear", 6],
@@ -51,7 +51,7 @@ const raw: [title: string, star: string, source: string, day: number][] = [
 const taglines = [
   "The whole ocean is out searching. Try the coffee machine.",
   "When the office empties, the real work comes alive.",
-  "Never wished on a star. Filed a ticket and followed up.",
+  "The ocean called. Prathima was in a meeting. It's calling again.",
   "Seven stand-ups a week. Still the fairest of them all.",
   "Saving the sprint again, in a cape HR hasn't approved.",
   "A roadmap that goes further than the org chart.",

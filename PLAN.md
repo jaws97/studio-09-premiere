@@ -95,7 +95,11 @@ Projector(s) + speakers available; lights can be dimmed (assume dim, not blackou
 
 **Slice 2 (Sep 21) — done:** `/ticket` box office (name → ticket; cast names get a gold ★ CAST ticket and their billing seat, others a hashed seat until the guest list is in the DB) · drag-to-tear along the perforation (monotonic tear, commits at 60%, springs back below; stub pivots from the attached end then falls away) · haptic tick per perforation + WebAudio-synthesised rip (`src/lib/rip.ts`, no assets) · confetti + ADMITTED stamp · tear dispatches `seat` so `/screen` lights the seat · "Tear ticket" button as accessible fallback · ticket persists in localStorage.
 
-**Next:** Supabase transport + admit API + PIN on `/host` and `/screen` (they bundle the secret titles) · sound design (Howler sprites) · GSAP polish on premieres · `/join` (bravo, messages, paparazzi) · Higgsfield pilot.
+**Slice 3 (Sep 21) — done:** show state moved server-side behind a `ShowStore` seam (`src/server/store.ts`, file-backed in `.data/`) with route handlers under `/api` · `/screen` + `/host` poll `/api/show` (~450ms, rev-gated); guest phones never subscribe, they only POST · PIN gate (`HOST_PIN`, httpOnly cookie) on `/screen`, `/host` and host APIs — verified the embargoed titles are absent from guest-page bundles · server-assigned unique seats (cast keep 1–27, balcony overflow past 120) · local-first admit with retry · `/join`: batched bravo button, 80-char credit message, client-compressed paparazzi upload · host moderation queue (nothing reaches the screen unapproved) · paparazzi strip on doors, guest wishes in credits · synthesised sound for every phase (`src/lib/sfx.ts`) + "click to arm" overlay + host mute · premiere polish (searchlights, floating foil poster, staggered title words) · production build passes · private repo: github.com/jaws97/studio-09-premiere.
+
+**Not yet seen by human eyes:** the PIN-gated `/screen` and `/host` visuals added in slice 3 (arm overlay, paparazzi strip, foil/searchlights, moderation queue) — the APIs behind them are tested, the pixels are not. All sound cues are untested by ear.
+
+**Next:** Supabase `ShowStore` for Vercel (needs `vercel link` + `vercel env pull` by the organiser) · guest list import (so tickets match real names) · Higgsfield pilot (one photo) → posters → VO → ident → trailer · replace synth cues with VO/ident audio · gate weave / cue marks / dust-mote beam on `/screen` · rehearsal script ("simulate 100 guests") · real-device pass (mid-range Android + iPhone).
 
 ## Open questions
 - Pilot person + their one photo

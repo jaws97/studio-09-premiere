@@ -1,36 +1,31 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Studio 09 · The Premiere
 
-## Getting Started
+Movie-premiere themed show for the September birthdays (event night: 7 Oct 2026). The big screen is the stage; phones are props. Full plan and decisions: [PLAN.md](PLAN.md).
 
-First, run the development server:
+## Run it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+| Route | Who | What |
+|---|---|---|
+| `/` | everyone, before the night | Teaser lobby. Titles and cast stay sealed until `revealAt` in `src/data/event.ts` (`NEXT_PUBLIC_REVEAL=1` previews the reveal). |
+| `/screen` | projector laptop (PIN) | The show. Click once to arm sound + fullscreen. `←` `→` / space step the show if the remote dies. |
+| `/host` | organiser's phone (PIN) | Remote: next/back, jump to phase or premiere, approve messages and photos, mute, rehearsal tools, reset. |
+| `/ticket` | guests | Box office → ticket → the usher swipes along the perforation to tear it. Seats the guest on `/screen`. |
+| `/join` | guests, after admission | Bravo button (drives the applause meter), a line for the end credits, paparazzi photo. |
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**PIN:** set `HOST_PIN` in `.env.local` (required in production). In development it falls back to `0909`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Rehearse on real phones:** run the dev server, then open `http://<laptop-ip>:3000/ticket` on a phone on the same Wi-Fi.
 
-## Learn More
+## How it fits together
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/data/` — all event content (people, titles, copy). Re-skin here for next month's theme.
+- `src/lib/show-core.ts` — show state + phase machine shared by server and client. Nothing secret lives in it.
+- `src/server/store.ts` — `ShowStore` seam. File-backed today (`.data/`, single Node process); a Supabase store slots in behind the same interface for Vercel.
+- `src/app/api/` — guests only ever POST (ticket, admit, clap, message, photo). Only `/screen` and `/host` poll `/api/show`.
+- `src/lib/sfx.ts`, `src/lib/rip.ts` — all sound is synthesised with WebAudio; swap individual cues for recorded files later.
+- Guest messages and photos never reach the screen until approved on `/host`.

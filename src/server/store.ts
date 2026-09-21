@@ -4,6 +4,7 @@ import { mkdir, readFile, rename, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { films } from "@/data/season";
 import { initialShow, SEATS, stepShow, type HostAction, type ShowState } from "@/lib/show-core";
+import { SupabaseStore } from "./supabase-store";
 
 /**
  * Storage seam. Everything the routes need goes through `ShowStore`, so the
@@ -218,4 +219,13 @@ class FileStore implements ShowStore {
 // One copy of the data per process. The store object itself is rebuilt on every module load, so a hot
 // reload picks up new logic (phase order, seat rules) instead of running stale code against live state.
 const g = globalThis as unknown as { __studio09Mem?: Mem };
-export const store: ShowStore = new FileStore((g.__studio09Mem ??= { data: null, loading: null, saveTimer: null }));
+
+// Supabase when its server credentials are present (Vercel's Supabase integration sets both);
+// otherwise the local file store.
+const sbUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
+const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+export const storeKind: "supabase" | "file" = sbUrl && sbKey ? "supabase" : "file";
+export const store: ShowStore =
+  sbUrl && sbKey
+    ? new SupabaseStore(sbUrl, sbKey)
+    : new FileStore((g.__studio09Mem ??= { data: null, loading: null, saveTimer: null }));

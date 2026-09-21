@@ -25,11 +25,25 @@ npm run dev
 
 **Rehearse on real phones:** run the dev server, then open `http://<laptop-ip>:3000/ticket` on a phone on the same Wi-Fi.
 
+## Deploy to Vercel
+
+Vercel functions share no memory or disk, so the deployed app must use the Supabase store (it switches on automatically when the credentials are present).
+
+1. **Supabase → SQL editor:** paste and run [supabase/schema.sql](supabase/schema.sql).
+2. **Supabase → Storage:** create a bucket named `s09-photos` and leave it **private**.
+3. **Vercel → Project → Settings → Environment Variables:**
+   - `HOST_PIN` — your own PIN for `/screen` and `/host` (required; the app refuses to run staff pages without it).
+   - `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` — already present if the Supabase integration is connected to this Vercel project. The service-role key is server-only; never prefix it with `NEXT_PUBLIC_`.
+4. Deploy, then open `/api/health`. You want `{"ok":true,"store":"supabase","pin":true}`. Anything else tells you what is missing.
+5. Load-test the real thing: `npm run rehearse -- --url https://<your-app>.vercel.app`, then **Reset show** from `/host`.
+
+The titles stay sealed on `/` until `revealAt` in `src/data/event.ts`; `/screen` and `/host` are PIN-gated. Keep the repo private: it contains the cast list and the surprise.
+
 ## How it fits together
 
 - `src/data/` — all event content (people, titles, copy). Re-skin here for next month's theme.
 - `src/lib/show-core.ts` — show state + phase machine shared by server and client. Nothing secret lives in it.
-- `src/server/store.ts` — `ShowStore` seam. File-backed today (`.data/`, single Node process); a Supabase store slots in behind the same interface for Vercel.
+- `src/server/store.ts` — `ShowStore` seam: file-backed locally (`.data/`), `src/server/supabase-store.ts` on Vercel. Racy writes (bravos, seating, approvals) are single SQL statements or compare-and-swap.
 - `src/app/api/` — guests only ever POST (ticket, admit, clap, message, photo). Only `/screen` and `/host` poll `/api/show`.
 - `src/lib/sfx.ts`, `src/lib/rip.ts` — all sound is synthesised with WebAudio; swap individual cues for recorded files later.
 - Guest messages and photos never reach the screen until approved on `/host`.

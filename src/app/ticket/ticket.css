@@ -220,3 +220,6 @@
 @media (prefers-reduced-motion: reduce) {
   .tk-paper, .tk-stamp, .pulse-hint { animation: none; }
 }
+
+a.tk-alt { display: inline-block; text-decoration: none; background: var(--gold); color: var(--night); box-shadow: 0 6px 0 var(--gold-shadow); font-size: 16px; padding: 12px 22px; margin-top: 6px; }
+.boxoffice p[role="alert"] { color: #ff8d80; font-size: 17px; }

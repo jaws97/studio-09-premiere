@@ -69,7 +69,7 @@
 .doors-frame h1 { font-size: 170px; }
 .doors-frame h1 span { font-size: 0.24em; letter-spacing: 0.18em; white-space: nowrap; }
 .doors-qr {
-  margin-top: 50px;
+  margin-top: 40px;
   display: flex;
   gap: 40px;
   align-items: center;
@@ -155,6 +155,22 @@
 .now-seated span { display: block; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.2em; font-size: 22px; color: var(--gold); font-weight: 700; }
 .now-seated b { display: block; font-family: var(--display); text-transform: uppercase; font-weight: 900; font-size: 76px; line-height: 1; color: var(--cream); }
 .now-seated em { font-size: 30px; color: var(--gold-2); }
+
+.paparazzi { margin-top: 40px; display: flex; gap: 18px; height: 170px; }
+.paparazzi img {
+  height: 170px;
+  width: 150px;
+  object-fit: cover;
+  border: 8px solid var(--cream);
+  border-bottom-width: 26px;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.6);
+  animation: flashbulb 1.1s ease-out both;
+}
+@keyframes flashbulb {
+  0% { filter: brightness(6) contrast(0.4); transform: scale(1.5); opacity: 0; }
+  18% { opacity: 1; }
+  100% { filter: none; transform: none; }
+}
 
 /* --------------------------------------------------------------- leader */
 .leader {
@@ -379,6 +395,9 @@
 .credit { display: grid; grid-template-columns: 1fr 1fr; gap: 50px; margin: 16px 0; font-size: 44px; line-height: 1.2; }
 .credit span { text-align: right; font-style: italic; color: var(--ink-soft); }
 .credit b { text-align: left; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 700; color: var(--cream); }
+.wish { margin: 46px auto; max-width: 1200px; }
+.wish q { display: block; font-style: italic; font-size: 50px; line-height: 1.2; color: var(--cream); }
+.wish b { display: block; margin-top: 10px; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.2em; font-size: 26px; color: var(--gold); }
 .roll .fin { margin: 200px 0 0; font-style: italic; font-size: 40px; color: var(--ink-soft); }
 .roll .cake { margin: 500px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 190px; color: var(--gold); }
 

@@ -4,11 +4,10 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { Bulbs } from "@/components/Bulbs";
 import { Curtains } from "@/components/Curtains";
 import { artClass, films, firstName, pad2, type Film } from "@/data/season";
-import { PHASE_LABEL, useShow, type Seated, type ShowState } from "@/lib/show";
+import { PHASE_LABEL, SEATS, useShow, type Seated, type ShowState, type Wish } from "@/lib/show";
 
 const STAGE_W = 1920;
 const STAGE_H = 1080;
-export const SEATS = 120;
 
 /** Fixed 1920×1080 stage scaled to fit whatever the projector gives us. */
 function useStageScale() {
@@ -23,14 +22,14 @@ function useStageScale() {
 }
 
 export function Screen() {
-  const { state, dispatch, ready } = useShow();
+  const { state, dispatch, ready, online } = useShow();
   const scale = useStageScale();
 
   // Keyboard fallback for the projector laptop if the host remote dies.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") dispatch({ type: "next", films: films.length });
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") dispatch({ type: "prev", films: films.length });
+      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") void dispatch({ type: "next" });
+      else if (e.key === "ArrowLeft" || e.key === "PageUp") void dispatch({ type: "prev" });
       else if (e.key === "f") document.documentElement.requestFullscreen?.();
     };
     addEventListener("keydown", onKey);
@@ -42,19 +41,22 @@ export function Screen() {
       <div className="stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
         {ready && (
           <div className="phase" key={state.phase}>
-            {state.phase === "doors" && <Doors seated={state.seated} />}
-            {state.phase === "leader" && <Leader onDone={() => dispatch({ type: "next", films: films.length })} />}
+            {state.phase === "doors" && <Doors seated={state.seated} photos={state.photos} />}
+            {state.phase === "leader" && <Leader onDone={() => void dispatch({ type: "next", ifPhase: "leader" })} />}
             {state.phase === "ident" && <Ident />}
             {state.phase === "curtain" && <CurtainUp />}
             {state.phase === "trailer" && <Trailer />}
             {state.phase === "premieres" && <Premiere key={state.premiere} film={films[state.premiere]} />}
             {state.phase === "curtaincall" && <CurtainCall state={state} />}
-            {state.phase === "credits" && <Credits />}
+            {state.phase === "credits" && <Credits wishes={state.wishes} />}
           </div>
         )}
         <div className="grain" aria-hidden="true" />
         <div className="vignette" aria-hidden="true" />
-        <div className="phase-chip">{PHASE_LABEL[state.phase]}</div>
+        <div className="phase-chip">
+          {PHASE_LABEL[state.phase]}
+          {!online && " · reconnecting…"}
+        </div>
       </div>
     </div>
   );
@@ -62,7 +64,7 @@ export function Screen() {
 
 /* ------------------------------------------------------------------ doors */
 
-function Doors({ seated }: { seated: Seated[] }) {
+function Doors({ seated, photos }: { seated: Seated[]; photos: string[] }) {
   const latest = seated[seated.length - 1];
   const taken = useMemo(() => new Map(seated.map((g) => [g.seat, g])), [seated]);
   return (
@@ -81,6 +83,7 @@ function Doors({ seated }: { seated: Seated[] }) {
             <p>Then show it to the usher. No ticket, no popcorn.</p>
           </div>
         </div>
+        <Paparazzi photos={photos} />
       </div>
       <div className="doors-right">
         <div className="house-head">
@@ -113,6 +116,20 @@ function Doors({ seated }: { seated: Seated[] }) {
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Latest approved guest photos, pinned up like red-carpet snaps. */
+function Paparazzi({ photos }: { photos: string[] }) {
+  const latest = photos.slice(-5);
+  if (!latest.length) return null;
+  return (
+    <div className="paparazzi">
+      {latest.map((id, i) => (
+        // eslint-disable-next-line @next/next/no-img-element -- served by our own photo route
+        <img key={id} src={`/api/photo/${id}`} alt="" style={{ rotate: `${((i * 37) % 13) - 6}deg` }} />
+      ))}
     </div>
   );
 }
@@ -358,7 +375,7 @@ const stockRoles = [
   "Location Scout",
 ];
 
-function Credits() {
+function Credits({ wishes }: { wishes: Wish[] }) {
   return (
     <div className="credits">
       <div className="roll">
@@ -379,7 +396,16 @@ function Credits() {
           </div>
         ))}
         <h3>From the audience</h3>
-        <p className="sub">Guest messages roll here once the phones are wired in.</p>
+        {wishes.length ? (
+          wishes.map((w) => (
+            <div className="wish" key={w.id}>
+              <q>{w.text}</q>
+              <b>{w.name}</b>
+            </div>
+          ))
+        ) : (
+          <p className="sub">The audience was speechless.</p>
+        )}
         <p className="fin">No birthdays were harmed in the making of this season.</p>
         <p className="cake">Cake in the lobby.</p>
       </div>

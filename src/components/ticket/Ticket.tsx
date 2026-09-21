@@ -9,20 +9,20 @@ import {
 } from "motion/react";
 import { useEffect, useRef, useState } from "react";
 import { buzz, ripFinish, ripTick, unlockRip } from "@/lib/rip";
-import { useShow } from "@/lib/show";
+import { numOf, rowOf } from "@/lib/show-core";
 import { createStore } from "@/lib/store";
 
-/** mirrors SEATS on /screen; kept local so this page never bundles the film titles */
-const SEATS = 120;
-const PER_ROW = 12;
 const HOLES = 22;
 const COMMIT_AT = 0.6;
 
 type TicketData = {
+  id: string;
   name: string;
   seat: number;
   star: boolean;
   admittedAt?: number;
+  /** the server has recorded the admission */
+  synced?: boolean;
 };
 
 const KEY = "studio09-ticket";
@@ -45,62 +45,72 @@ function saveTicket(t: TicketData | null) {
   } catch {}
 }
 
-const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 const pad2 = (n: number) => String(n).padStart(2, "0");
-const rowOf = (seat: number) =>
-  String.fromCharCode(64 + Math.ceil(seat / PER_ROW));
-const numOf = (seat: number) => ((seat - 1) % PER_ROW) + 1;
 
-/** Stand-in until the guest list lives in the database: cast get their billing seat, everyone else a hashed one. */
-function assignSeat(
-  name: string,
-  cast: string[],
-): Pick<TicketData, "seat" | "star"> {
-  const i = cast.findIndex((c) => norm(c) === norm(name));
-  if (i >= 0) return { seat: i + 1, star: true };
-  let h = 0;
-  for (const ch of norm(name)) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
-  return { seat: cast.length + 1 + (h % (SEATS - cast.length)), star: false };
+const post = (url: string, body: unknown) =>
+  fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+
+/**
+ * The tear is local-first: it always plays, and the admit call is retried
+ * until the server has it, so bad venue Wi-Fi can delay the big screen but
+ * never block the door.
+ */
+async function syncAdmit() {
+  const t = ticketStore.get();
+  if (!t?.admittedAt || t.synced) return;
+  try {
+    const res = await post("/api/admit", { id: t.id });
+    // 404 = the show was reset since this ticket was printed; nothing left to sync
+    if (res.ok || res.status === 404) saveTicket({ ...t, synced: true });
+  } catch {}
 }
 
 export function TicketPage({ cast }: { cast: string[] }) {
   const ticket = ticketStore.use();
+  useEffect(() => {
+    void syncAdmit();
+    const t = setInterval(syncAdmit, 4000);
+    return () => clearInterval(t);
+  }, []);
   if (ticket === undefined) return <main className="ticket-page" />;
   return (
     <main className="ticket-page">
       <header className="tp-head">
         <b>Studio 09</b>
         <span>Opening night · 7 October</span>
+          <a className="tk-alt" href="/join">
+            Join the show →
+          </a>
       </header>
       {ticket ? (
         <Ticket ticket={ticket} />
       ) : (
-        <BoxOffice
-          cast={cast}
-          onIssue={(name) => saveTicket({ name, ...assignSeat(name, cast) })}
-        />
+        <BoxOffice cast={cast} />
       )}
     </main>
   );
 }
 
-function BoxOffice({
-  cast,
-  onIssue,
-}: {
-  cast: string[];
-  onIssue: (name: string) => void;
-}) {
+function BoxOffice({ cast }: { cast: string[] }) {
   const [name, setName] = useState("");
-  const ok = name.trim().length >= 2;
+  const [state, setState] = useState<"idle" | "busy" | "failed">("idle");
+  const ok = name.trim().length >= 2 && state !== "busy";
+
+  const issue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!ok) return;
+    setState("busy");
+    try {
+      const res = await post("/api/ticket", { name });
+      if (!res.ok) throw new Error(String(res.status));
+      saveTicket((await res.json()) as TicketData);
+    } catch {
+      setState("failed");
+    }
+  };
+
   return (
-    <form
-      className="boxoffice"
-      onSubmit={(e) => {
-        e.preventDefault();
-        if (ok) onIssue(name.trim().replace(/\s+/g, " "));
-      }}
-    >
+    <form className="boxoffice" onSubmit={issue}>
       <h1>Box office</h1>
       <p>Name on the ticket, please.</p>
       <input
@@ -118,14 +128,14 @@ function BoxOffice({
         ))}
       </datalist>
       <button type="submit" disabled={!ok}>
-        Print my ticket
+        {state === "busy" ? "Printing…" : "Print my ticket"}
       </button>
+      {state === "failed" && <p role="alert">The box office line is busy. Try once more.</p>}
     </form>
   );
 }
 
 function Ticket({ ticket }: { ticket: TicketData }) {
-  const { dispatch } = useShow();
   const torn = ticket.admittedAt != null;
   const progress = useMotionValue(torn ? 1 : 0);
   const seamRef = useRef<HTMLDivElement>(null);
@@ -164,10 +174,7 @@ function Ticket({ ticket }: { ticket: TicketData }) {
     animate(dropRotate, -28, { duration: 0.9, ease: "easeIn" });
     animate(dropOpacity, 0, { duration: 0.35, delay: 0.55 });
     saveTicket({ ...ticket, admittedAt: Date.now() });
-    dispatch({
-      type: "seat",
-      guest: { seat: ticket.seat, name: ticket.name, star: ticket.star },
-    });
+    void syncAdmit();
     if (!matchMedia("(prefers-reduced-motion: reduce)").matches) {
       import("canvas-confetti").then(({ default: confetti }) =>
         confetti({

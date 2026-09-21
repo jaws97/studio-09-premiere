@@ -88,6 +88,7 @@ export function Host() {
             </button>
           ))}
           <a href="/host/script">Announcer script &amp; recording sheet →</a>
+          <a href="/host/posters">Poster review →</a>
         </div>
       </section>
 

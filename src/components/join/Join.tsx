@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { buzz } from "@/lib/rip";
 import { useTicket } from "@/lib/ticket";
@@ -11,20 +12,16 @@ import { useTicket } from "@/lib/ticket";
  */
 export function Join() {
   const ticket = useTicket();
-  if (ticket === undefined) return <main className="join" />;
-  const name = ticket?.name ?? null;
-  if (name === null)
-    return (
-      <main className="join">
-        <header>
-          <b>Studio 09</b>
-          <span>You&apos;ll need a ticket first</span>
-        </header>
-        <a className="j-btn" href="/ticket">
-          To the box office →
-        </a>
-      </main>
-    );
+  const router = useRouter();
+
+  // No ticket (never printed, or voided by a show reset): there is nothing to do here, so go straight
+  // to the box office instead of stopping on a dead-end screen.
+  useEffect(() => {
+    if (ticket === null) router.replace("/ticket");
+  }, [ticket, router]);
+
+  if (!ticket) return <main className="join" />;
+  const name = ticket.name;
   return (
     <main className="join">
       <header>

@@ -222,8 +222,17 @@ const g = globalThis as unknown as { __studio09Mem?: Mem };
 
 // Supabase when its server credentials are present (Vercel's Supabase integration sets both);
 // otherwise the local file store.
-const sbUrl = process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
-const sbKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+// The integration lets you choose a prefix when connecting a project (STORAGE_SUPABASE_URL, …),
+// so match on the suffix rather than the exact name.
+function envEndingWith(suffix: string, exclude?: RegExp) {
+  if (process.env[suffix]) return process.env[suffix];
+  const key = Object.keys(process.env)
+    .sort()
+    .find((k) => k.endsWith(suffix) && !exclude?.test(k) && process.env[k]);
+  return key ? process.env[key] : undefined;
+}
+const sbUrl = envEndingWith("SUPABASE_URL");
+const sbKey = envEndingWith("SUPABASE_SERVICE_ROLE_KEY", /^NEXT_PUBLIC_/);
 export const storeKind: "supabase" | "file" = sbUrl && sbKey ? "supabase" : "file";
 export const store: ShowStore =
   sbUrl && sbKey

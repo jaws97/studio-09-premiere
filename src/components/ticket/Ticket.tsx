@@ -8,9 +8,21 @@ import {
   useTransform,
 } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { armRipOnFirstTouch, buzz, ripFinish, ripTick, unlockRip } from "@/lib/rip";
+import {
+  armRipOnFirstTouch,
+  buzz,
+  ripFinish,
+  ripTick,
+  unlockRip,
+} from "@/lib/rip";
 import { numOf, rowOf } from "@/lib/show-core";
-import { post, saveTicket, syncAdmit, useTicket, type TicketData } from "@/lib/ticket";
+import {
+  post,
+  saveTicket,
+  syncAdmit,
+  useTicket,
+  type TicketData,
+} from "@/lib/ticket";
 
 /** distance between perforation holes in CSS px; must match --pitch in ticket.css */
 const PITCH = 14;
@@ -28,11 +40,7 @@ export function TicketPage({ cast }: { cast: string[] }) {
         <b>Studio 09</b>
         <span>Opening night · 7 October</span>
       </header>
-      {ticket ? (
-        <Ticket ticket={ticket} />
-      ) : (
-        <BoxOffice cast={cast} />
-      )}
+      {ticket ? <Ticket ticket={ticket} /> : <BoxOffice cast={cast} />}
     </main>
   );
 }
@@ -56,29 +64,77 @@ function BoxOffice({ cast }: { cast: string[] }) {
     }
   };
 
+  const typed = name.trim().replace(/\s+/g, " ");
+  const isCast = cast.some((c) => c.toLowerCase() === typed.toLowerCase());
+
   return (
-    <form className="boxoffice" onSubmit={issue}>
-      <h1>Box office</h1>
-      <p>Name on the ticket, please.</p>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        list="cast"
-        placeholder="Your full name"
-        autoComplete="name"
-        enterKeyHint="go"
-        maxLength={48}
-      />
-      <datalist id="cast">
-        {cast.map((c) => (
-          <option key={c} value={c} />
-        ))}
-      </datalist>
-      <button type="submit" disabled={!ok}>
-        {state === "busy" ? "Printing…" : "Print my ticket"}
-      </button>
-      {state === "failed" && <p role="alert">The box office line is busy. Try once more.</p>}
-    </form>
+    <div className="bo">
+      {/* the booth: generated art, no text in it, fading into the page */}
+      <div className="bo-hero" role="img" aria-label="A glowing vintage cinema box office">
+        {/* lettered onto the blank sign panel in the artwork */}
+        <span className="bo-sign">Box office</span>
+      </div>
+
+      {/* the ticket fills itself in as the guest types */}
+      <div
+        className={`bo-preview${isCast ? " cast" : ""}${typed ? " live" : ""}`}
+        aria-hidden="true"
+      >
+        <div>
+          <small>Admit one</small>
+          <b>{typed || "Your name here"}</b>
+          <em>{isCast ? "★ Tonight's cast" : "Opening night · 7 October"}</em>
+        </div>
+        <div className="bo-preview-seat">
+          <small>Seat</small>
+          <b>?</b>
+        </div>
+      </div>
+
+      <form className="boxoffice" onSubmit={issue}>
+        <p>Name on the ticket, please.</p>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          list="cast"
+          placeholder="Your full name"
+          autoComplete="name"
+          enterKeyHint="go"
+          maxLength={48}
+        />
+        <datalist id="cast">
+          {cast.map((c) => (
+            <option key={c} value={c} />
+          ))}
+        </datalist>
+        <button type="submit" disabled={!ok}>
+          {state === "busy" ? "Printing…" : "Print my ticket"}
+        </button>
+        {state === "failed" && (
+          <p role="alert">The box office line is busy. Try once more.</p>
+        )}
+      </form>
+
+      <ol className="bo-steps">
+        <li>
+          <b>Print your ticket</b>
+          <span>Your seat is picked for you. No refunds, no regrets.</span>
+        </li>
+        <li>
+          <b>Show it to the usher</b>
+          <span>
+            They tear along the dotted line. Sound on, it&apos;s satisfying.
+          </span>
+        </li>
+        <li>
+          <b>You&apos;re in</b>
+          <span>
+            Watch the big screen. It announces you like you own the place.
+          </span>
+        </li>
+      </ol>
+      <p className="bo-foot">One ticket per person. No ticket, no popcorn.</p>
+    </div>
   );
 }
 
@@ -149,7 +205,10 @@ function Ticket({ ticket }: { ticket: TicketData }) {
     // the tear has to start where the paper is still whole, not mid-ticket
     if (pAt(e.clientX) > progress.get() + 0.22) return;
     dragging.current = true;
-    holes.current = Math.max(8, Math.round(seamRef.current!.getBoundingClientRect().width / PITCH));
+    holes.current = Math.max(
+      8,
+      Math.round(seamRef.current!.getBoundingClientRect().width / PITCH),
+    );
     setHint(false);
     e.currentTarget.setPointerCapture(e.pointerId);
   };
@@ -183,10 +242,27 @@ function Ticket({ ticket }: { ticket: TicketData }) {
     <div className={`tk${ticket.star ? " cast" : ""}${torn ? " torn" : ""}`}>
       <div className="tk-paper">
         {/* roughens the perforated edges so torn paper shows fibres instead of a vector-clean cut */}
-        <svg width="0" height="0" style={{ position: "absolute" }} aria-hidden="true">
+        <svg
+          width="0"
+          height="0"
+          style={{ position: "absolute" }}
+          aria-hidden="true"
+        >
           <filter id="tk-rough" x="-5%" y="-60%" width="110%" height="220%">
-            <feTurbulence type="fractalNoise" baseFrequency="0.85 0.3" numOctaves="2" seed="7" result="noise" />
-            <feDisplacementMap in="SourceGraphic" in2="noise" scale="5" xChannelSelector="R" yChannelSelector="G" />
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.85 0.3"
+              numOctaves="2"
+              seed="7"
+              result="noise"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale="5"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
           </filter>
         </svg>
         <div className="tk-bodywrap">
@@ -238,7 +314,11 @@ function Ticket({ ticket }: { ticket: TicketData }) {
               aria-valuemax={100}
               aria-valuenow={0}
               onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " " || e.key === "ArrowRight") {
+                if (
+                  e.key === "Enter" ||
+                  e.key === " " ||
+                  e.key === "ArrowRight"
+                ) {
                   e.preventDefault();
                   tearByKey();
                 }
@@ -248,7 +328,10 @@ function Ticket({ ticket }: { ticket: TicketData }) {
               onPointerUp={onUp}
               onPointerCancel={onUp}
             >
-              <motion.i className={`tk-handle${hint ? " nudge" : ""}`} style={{ left: handleLeft }} />
+              <motion.i
+                className={`tk-handle${hint ? " nudge" : ""}`}
+                style={{ left: handleLeft }}
+              />
             </div>
           )}
         </div>

@@ -78,6 +78,12 @@ const taglines = [
   "One sorcerer's hat. Too many brooms. Flawless finale."
 ];
 
+/**
+ * Films whose poster art exists in public/posters as NN.webp (+ NN-sm.webp for
+ * the lobby wall). The art carries no text: titles are laid over it in HTML.
+ */
+const withPoster = new Set([1, 8, 21]);
+
 const slugify = (s: string) =>
   s.toLowerCase().replace(/['’.,]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -91,10 +97,12 @@ export const films: Film[] = raw.map(([title, star, source, day], i) => ({
   tagline: taglines[i],
   // Until a photo arrives everyone is a "mystery billing" poster.
   tier: "C",
+  poster: withPoster.has(i + 1) ? `/posters/${String(i + 1).padStart(2, "0")}.webp` : undefined,
 }));
 
 export const pad2 = (n: number) => String(n).padStart(2, "0");
 /** skips initials, so "R Ketan Kumar" is Ketan rather than R */
 export const firstName = (f: Film) => f.star.split(" ").find((w) => w.length > 2) ?? f.star;
+export const posterThumb = (f: Film) => f.poster?.replace(".webp", "-sm.webp");
 /** placeholder art class until real posters land (a1..a9) */
 export const artClass = (f: Film) => `art a${((f.no - 1) % 9) + 1}`;

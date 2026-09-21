@@ -70,7 +70,9 @@ export function Screen() {
           <div className={`phase${FILM_PHASES.has(state.phase) ? " weave" : ""}`} key={state.phase}>
             {state.phase === "doors" && <Doors seated={state.seated} photos={state.photos} />}
             {state.phase === "leader" && <Leader onDone={() => void dispatch({ type: "next", ifPhase: "leader" })} />}
-            {state.phase === "ident" && <Ident />}
+            {state.phase === "ident" && (
+              <Ident muted={state.muted} onDone={() => void dispatch({ type: "next", ifPhase: "ident" })} />
+            )}
             {state.phase === "curtain" && <CurtainUp />}
             {state.phase === "trailer" && <Trailer />}
             {state.phase === "premieres" && <Premiere key={state.premiere} film={films[state.premiere]} />}
@@ -318,7 +320,40 @@ function Leader({ onDone }: { onDone: () => void }) {
 
 /* ------------------------------------------------------------------ ident */
 
-function Ident() {
+/** The team's ident film (public/media/ident.mp4). If it can't play, the title card and synth fanfare stand in. */
+function Ident({ muted, onDone }: { muted: boolean; onDone: () => void }) {
+  const [failed, setFailed] = useState(false);
+  const video = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const v = video.current;
+    if (!v) return;
+    v.muted = muted;
+    // autoplay with sound is allowed because the operator armed the room with a click
+    v.play().catch(() => {
+      v.muted = true;
+      v.play().catch(() => setFailed(true));
+    });
+  }, [muted]);
+
+  if (!failed)
+    return (
+      <div className="ident">
+        <video
+          ref={video}
+          className="ident-video"
+          src="/media/ident.mp4"
+          playsInline
+          preload="auto"
+          onEnded={onDone}
+          onError={() => setFailed(true)}
+        />
+      </div>
+    );
+  return <IdentCard />;
+}
+
+function IdentCard() {
   useCue(sfx.fanfare);
   return (
     <div className="ident">
@@ -413,6 +448,12 @@ function Premiere({ film }: { film: Film }) {
             <img src={film.poster} alt="" />
           ) : (
             <div className={artClass(film)} />
+          )}
+          {film.poster && (
+            <div className="poster-title">
+              <b>{film.title}</b>
+              <span>Starring {film.star}</span>
+            </div>
           )}
           <div className="foil" />
           <div className="sheen" />

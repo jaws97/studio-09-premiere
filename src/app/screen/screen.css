@@ -275,6 +275,7 @@
 
 /* ---------------------------------------------------------------- ident */
 .ident { position: absolute; inset: 0; background: #000; display: grid; place-items: center; overflow: hidden; }
+.ident-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #000; }
 .ident-rays {
   position: absolute;
   inset: -60%;
@@ -400,6 +401,10 @@
   from { transform: perspective(1400px) rotateY(-5deg) rotateX(1.5deg) translateY(6px); }
   to { transform: perspective(1400px) rotateY(5deg) rotateX(-1.5deg) translateY(-6px); }
 }
+/* real poster art has no text: the title sits in the dark lower third left for it */
+.poster-title { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 44px 54px; text-align: center; font-family: var(--display); text-transform: uppercase; }
+.poster-title b { display: block; font-weight: 900; font-size: 84px; line-height: 0.9; color: var(--cream); text-shadow: 0 4px 0 rgba(0, 0, 0, 0.5), 0 0 40px rgba(0, 0, 0, 0.8); text-wrap: balance; }
+.poster-title span { display: block; margin-top: 18px; font-size: 22px; letter-spacing: 0.2em; font-weight: 700; color: var(--gold-2); }
 /* holographic foil that drifts as the poster turns */
 .foil {
   position: absolute;
@@ -407,7 +412,7 @@
   background: repeating-linear-gradient(115deg, rgba(255, 120, 120, 0.5) 0%, rgba(255, 220, 120, 0.5) 8%, rgba(120, 255, 200, 0.45) 16%, rgba(120, 170, 255, 0.5) 24%, rgba(240, 120, 255, 0.45) 32%, rgba(255, 120, 120, 0.5) 40%);
   background-size: 300% 300%;
   mix-blend-mode: color-dodge;
-  opacity: 0.2;
+  opacity: 0.12;
   animation: foil 9s 3.3s ease-in-out infinite alternate;
 }
 @keyframes foil {

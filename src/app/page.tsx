@@ -1,7 +1,7 @@
 import { connection } from "next/server";
 import { Lobby, type LobbyFilm } from "@/components/lobby/Lobby";
 import { event, isRevealed, tickerExtras } from "@/data/event";
-import { artClass, films } from "@/data/season";
+import { artClass, films, posterThumb } from "@/data/season";
 import "./lobby.css";
 
 export default async function Home() {
@@ -11,7 +11,7 @@ export default async function Home() {
 
   const lobbyFilms: LobbyFilm[] = films.map((f) =>
     revealed
-      ? { no: f.no, day: f.day, art: artClass(f), title: f.title, star: f.star, source: f.source, poster: f.poster }
+      ? { no: f.no, day: f.day, art: artClass(f), title: f.title, star: f.star, source: f.source, poster: posterThumb(f) }
       : { no: f.no, day: f.day, art: artClass(f) },
   );
 

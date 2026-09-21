@@ -42,3 +42,6 @@ next-env.d.ts
 
 # local show state + guest photos
 /.data
+
+.vercel
+.env*

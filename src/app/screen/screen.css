@@ -56,6 +56,23 @@
   opacity: 0.35;
 }
 
+.arm {
+  position: absolute;
+  inset: 0;
+  z-index: 400;
+  border: 0;
+  cursor: pointer;
+  background: rgba(8, 5, 4, 0.82);
+  display: grid;
+  place-content: center;
+  gap: 18px;
+  text-align: center;
+  font-family: var(--display);
+  text-transform: uppercase;
+}
+.arm b { font-size: 120px; line-height: 1; font-weight: 900; color: var(--gold); }
+.arm span { font-size: 30px; letter-spacing: 0.16em; color: var(--ink-soft); }
+
 /* ---------------------------------------------------------------- doors */
 .doors {
   position: absolute;
@@ -262,6 +279,20 @@
 
 /* ------------------------------------------------------------- premiere */
 .premiere { position: absolute; inset: 0; background: radial-gradient(ellipse at 30% 50%, #2a1512, var(--night) 70%); }
+/* premiere-night searchlights behind everything */
+.spot {
+  position: absolute;
+  bottom: -30%;
+  width: 20%;
+  height: 170%;
+  background: linear-gradient(0deg, rgba(244, 210, 122, 0.3), transparent 75%);
+  transform-origin: 50% 100%;
+  filter: blur(14px);
+  mix-blend-mode: screen;
+  animation: sweep 11s ease-in-out infinite alternate, phase-in 2s 2s ease both;
+}
+.spot.s1 { left: 18%; }
+.spot.s2 { left: 74%; animation-duration: 14s, 2s; animation-direction: alternate-reverse, normal; }
 .clapper {
   position: absolute;
   left: 50%;
@@ -317,7 +348,25 @@
   overflow: hidden;
   background: var(--velvet);
   box-shadow: 0 50px 120px rgba(0, 0, 0, 0.8), 0 0 0 6px var(--gold), 0 0 90px rgba(226, 181, 68, 0.35);
-  animation: poster-in 1.3s 2s cubic-bezier(0.15, 0.9, 0.25, 1) both;
+  animation: poster-in 1.3s 2s cubic-bezier(0.15, 0.9, 0.25, 1) both, poster-float 9s 3.3s ease-in-out infinite alternate;
+}
+@keyframes poster-float {
+  from { transform: perspective(1400px) rotateY(-5deg) rotateX(1.5deg) translateY(6px); }
+  to { transform: perspective(1400px) rotateY(5deg) rotateX(-1.5deg) translateY(-6px); }
+}
+/* holographic foil that drifts as the poster turns */
+.foil {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(115deg, rgba(255, 120, 120, 0.5) 0%, rgba(255, 220, 120, 0.5) 8%, rgba(120, 255, 200, 0.45) 16%, rgba(120, 170, 255, 0.5) 24%, rgba(240, 120, 255, 0.45) 32%, rgba(255, 120, 120, 0.5) 40%);
+  background-size: 300% 300%;
+  mix-blend-mode: color-dodge;
+  opacity: 0.2;
+  animation: foil 9s 3.3s ease-in-out infinite alternate;
+}
+@keyframes foil {
+  from { background-position: 0% 30%; }
+  to { background-position: 100% 70%; }
 }
 @keyframes poster-in {
   from { opacity: 0; transform: perspective(1400px) rotateY(-38deg) translateX(-160px) scale(0.86); filter: brightness(2.2); }
@@ -340,7 +389,7 @@
   from { opacity: 0; transform: translateY(50px); }
 }
 .billing .after { animation-delay: 2.7s; display: inline-block; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.22em; font-size: 28px; font-weight: 700; color: var(--night); background: var(--gold); padding: 6px 18px; border-radius: 6px; }
-.billing h2 { animation-delay: 3s; margin: 30px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 176px; line-height: 0.88; color: var(--cream); text-shadow: 0 8px 0 rgba(0, 0, 0, 0.45); text-wrap: balance; }
+.billing h2 { animation: none; margin: 30px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 176px; line-height: 0.88; color: var(--cream); text-shadow: 0 8px 0 rgba(0, 0, 0, 0.45); text-wrap: balance; }
 .billing .starring { animation-delay: 3.5s; margin: 44px 0 0; font-style: italic; font-size: 52px; color: var(--ink-soft); }
 .billing .starring b { display: block; font-style: normal; font-weight: 600; font-size: 84px; line-height: 1.05; color: var(--gold-2); }
 .billing .release { animation-delay: 3.9s; margin: 40px 0 0; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.16em; font-size: 30px; color: var(--ink-soft); }
@@ -403,4 +452,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .grain { animation: none; }
+}
+
+.billing h2 span { display: inline-block; margin-right: 0.22em; animation: word-in 0.8s cubic-bezier(0.2, 0.9, 0.25, 1) both; }
+@keyframes word-in {
+  from { opacity: 0; transform: translateY(0.6em) rotate(4deg); filter: blur(6px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .bigposter, .foil, .spot { animation-name: phase-in; animation-iteration-count: 1; }
 }

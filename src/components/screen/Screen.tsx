@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { Bulbs } from "@/components/Bulbs";
 import { Curtains } from "@/components/Curtains";
 import { artClass, films, firstName, pad2, type Film } from "@/data/season";
+import * as sfx from "@/lib/sfx";
 import { PHASE_LABEL, SEATS, useShow, type Seated, type ShowState, type Wish } from "@/lib/show";
 
 const STAGE_W = 1920;
@@ -24,6 +25,15 @@ function useStageScale() {
 export function Screen() {
   const { state, dispatch, ready, online } = useShow();
   const scale = useStageScale();
+  const [armed, setArmed] = useState(false);
+
+  useEffect(() => sfx.setMuted(state.muted), [state.muted, armed]);
+
+  // Browsers only play audio after a gesture, so the operator arms the room once.
+  const armRoom = async () => {
+    setArmed(await sfx.arm());
+    document.documentElement.requestFullscreen?.().catch(() => {});
+  };
 
   // Keyboard fallback for the projector laptop if the host remote dies.
   useEffect(() => {
@@ -51,6 +61,12 @@ export function Screen() {
             {state.phase === "credits" && <Credits wishes={state.wishes} />}
           </div>
         )}
+        {ready && !armed && (
+          <button type="button" className="arm" onClick={armRoom}>
+            <b>Click to arm sound</b>
+            <span>and go fullscreen · ← → step the show · host remote at /host</span>
+          </button>
+        )}
         <div className="grain" aria-hidden="true" />
         <div className="vignette" aria-hidden="true" />
         <div className="phase-chip">
@@ -62,11 +78,27 @@ export function Screen() {
   );
 }
 
+/** Fire a cue `delay` ms after mount. The timeout keeps dev StrictMode's double mount from doubling the sound. */
+function useCue(cue: () => void, delay = 40) {
+  const fire = useEffectEvent(cue);
+  useEffect(() => {
+    const t = setTimeout(fire, delay);
+    return () => clearTimeout(t);
+  }, [delay]);
+}
+
 /* ------------------------------------------------------------------ doors */
 
 function Doors({ seated, photos }: { seated: Seated[]; photos: string[] }) {
   const latest = seated[seated.length - 1];
   const taken = useMemo(() => new Map(seated.map((g) => [g.seat, g])), [seated]);
+
+  // chime for arrivals, but not for whoever was already seated when the screen loaded
+  const seen = useRef<number | null>(null);
+  useEffect(() => {
+    if (seen.current !== null && seated.length > seen.current && latest) sfx.chime(latest.star);
+    seen.current = seated.length;
+  }, [seated.length, latest]);
   return (
     <div className="doors">
       <div className="doors-left">
@@ -168,6 +200,14 @@ function TicketQr() {
 function Leader({ onDone }: { onDone: () => void }) {
   const [n, setN] = useState(5);
   const finish = useEffectEvent(onDone);
+
+  useEffect(() => {
+    const whirr = sfx.projector();
+    return () => whirr.stop();
+  }, []);
+  useEffect(() => {
+    if (n > 0) sfx.beep(n === 1);
+  }, [n]);
   useEffect(() => {
     if (n === 0) {
       const t = setTimeout(() => finish(), 350);
@@ -194,6 +234,7 @@ function Leader({ onDone }: { onDone: () => void }) {
 /* ------------------------------------------------------------------ ident */
 
 function Ident() {
+  useCue(sfx.fanfare);
   return (
     <div className="ident">
       {/* swapped for the generated ident video once it exists */}
@@ -211,6 +252,7 @@ function Ident() {
 
 function CurtainUp() {
   const [open, setOpen] = useState(false);
+  useCue(sfx.swoosh, 900);
   useEffect(() => {
     const t = setTimeout(() => setOpen(true), 900);
     return () => clearTimeout(t);
@@ -244,8 +286,12 @@ function Trailer() {
 /* --------------------------------------------------------------- premiere */
 
 function Premiere({ film }: { film: Film }) {
+  useCue(sfx.snap, 1050); // the clapper arm lands
+  useCue(sfx.reveal, 1900); // the poster swings in
   return (
     <div className="premiere">
+      <div className="spot s1" />
+      <div className="spot s2" />
       <div className="clapper">
         <div className="clap-arm" />
         <div className="clap-body">
@@ -277,11 +323,18 @@ function Premiere({ film }: { film: Film }) {
           ) : (
             <div className={artClass(film)} />
           )}
+          <div className="foil" />
           <div className="sheen" />
         </div>
         <div className="billing">
           <span className="after">A twist on {film.source}</span>
-          <h2>{film.title}</h2>
+          <h2 aria-label={film.title}>
+            {film.title.split(" ").map((word, i) => (
+              <span key={i} aria-hidden="true" style={{ animationDelay: `${3 + i * 0.14}s` }}>
+                {word}
+              </span>
+            ))}
+          </h2>
           <p className="starring">
             Starring <b>{film.star}</b>
           </p>
@@ -306,6 +359,17 @@ function CurtainCall({ state }: { state: ShowState }) {
   }, [state.applause]);
   const [level, setLevel] = useState(0);
   const peaked = useRef(false);
+  const crowd = useRef<ReturnType<typeof sfx.applause> | null>(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => (crowd.current = sfx.applause()), 40);
+    return () => {
+      clearTimeout(t);
+      crowd.current?.stop();
+      crowd.current = null;
+    };
+  }, []);
+  useEffect(() => crowd.current?.level?.(level), [level]);
 
   useEffect(() => {
     const samples: [number, number][] = [];

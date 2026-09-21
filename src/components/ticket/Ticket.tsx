@@ -78,9 +78,6 @@ export function TicketPage({ cast }: { cast: string[] }) {
       <header className="tp-head">
         <b>Studio 09</b>
         <span>Opening night · 7 October</span>
-          <a className="tk-alt" href="/join">
-            Join the show →
-          </a>
       </header>
       {ticket ? (
         <Ticket ticket={ticket} />
@@ -299,6 +296,9 @@ function Ticket({ ticket }: { ticket: TicketData }) {
             Find row {rowOf(ticket.seat)}, seat {pad2(numOf(ticket.seat))}. Look
             up — the big screen just seated you.
           </span>
+          <a className="tk-alt" href="/join">
+            Join the show →
+          </a>
         </div>
       ) : (
         <div className="tk-after">

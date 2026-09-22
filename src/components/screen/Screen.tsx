@@ -597,22 +597,6 @@ function CurtainCall({ state }: { state: ShowState }) {
 
 /* ---------------------------------------------------------------- credits */
 
-const stockRoles = [
-  "Executive Producer",
-  "Director of Photography",
-  "Best Boy Grip",
-  "Stunt Coordinator",
-  "Key Gaffer",
-  "Script Supervisor",
-  "Catering (ate it all)",
-  "Dialogue Coach",
-  "Second Unit Director",
-  "Foley Artist",
-  "Dolly Grip",
-  "Continuity",
-  "Location Scout",
-];
-
 function Credits({ wishes }: { wishes: Wish[] }) {
   useCue(() => say(showCues.credits), 1500);
   return (
@@ -624,13 +608,6 @@ function Credits({ wishes }: { wishes: Wish[] }) {
         {films.map((f) => (
           <div className="credit" key={f.no}>
             <span>{f.title}</span>
-            <b>{f.star}</b>
-          </div>
-        ))}
-        <h3>The crew</h3>
-        {films.map((f, i) => (
-          <div className="credit" key={f.no}>
-            <span>{f.creditRole ?? stockRoles[i % stockRoles.length]}</span>
             <b>{f.star}</b>
           </div>
         ))}

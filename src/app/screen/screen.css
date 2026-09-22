@@ -519,7 +519,7 @@
 .credits::after { content: ""; position: absolute; left: 0; right: 0; height: 180px; z-index: 2; pointer-events: none; }
 .credits::before { top: 0; background: linear-gradient(180deg, #000, transparent); }
 .credits::after { bottom: 0; background: linear-gradient(0deg, #000, transparent); }
-.roll { position: absolute; left: 0; right: 0; top: 100%; text-align: center; animation: roll 150s linear both; }
+.roll { position: absolute; left: 0; right: 0; top: 100%; text-align: center; animation: roll 110s linear both; }
 @keyframes roll {
   to { transform: translateY(calc(-100% - 1080px)); }
 }

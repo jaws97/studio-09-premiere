@@ -15,7 +15,6 @@ export type Film = {
   tier: PosterTier;
   poster?: string;
   clip?: string;
-  creditRole?: string;
 };
 
 const raw: [title: string, star: string, source: string, day: number][] = [

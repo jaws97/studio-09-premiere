@@ -11,6 +11,8 @@ import { useEffect, useRef, useState } from "react";
 import {
   armRipOnFirstTouch,
   buzz,
+  printCut,
+  printStep,
   ripFinish,
   ripTick,
   unlockRip,
@@ -32,6 +34,9 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
 
 export function TicketPage({ cast }: { cast: string[] }) {
   const ticket = useTicket();
+  // true only for a ticket issued on this page load: it comes out of the printer. A reloaded ticket is
+  // already in the guest's hand, so it just appears.
+  const [fresh, setFresh] = useState(false);
   useEffect(() => armRipOnFirstTouch(), []);
   if (ticket === undefined) return <main className="ticket-page" />;
   return (
@@ -40,12 +45,22 @@ export function TicketPage({ cast }: { cast: string[] }) {
         <b>Studio 09</b>
         <span>Opening night · 7 October</span>
       </header>
-      {ticket ? <Ticket ticket={ticket} /> : <BoxOffice cast={cast} />}
+      {ticket ? (
+        <Ticket ticket={ticket} print={fresh} />
+      ) : (
+        <BoxOffice cast={cast} onIssued={() => setFresh(true)} />
+      )}
     </main>
   );
 }
 
-function BoxOffice({ cast }: { cast: string[] }) {
+function BoxOffice({
+  cast,
+  onIssued,
+}: {
+  cast: string[];
+  onIssued: () => void;
+}) {
   const [name, setName] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "failed">("idle");
   const ok = name.trim().length >= 2 && state !== "busy";
@@ -58,7 +73,9 @@ function BoxOffice({ cast }: { cast: string[] }) {
     try {
       const res = await post("/api/ticket", { name });
       if (!res.ok) throw new Error(String(res.status));
-      saveTicket((await res.json()) as TicketData);
+      const issued = (await res.json()) as TicketData;
+      onIssued();
+      saveTicket(issued);
     } catch {
       setState("failed");
     }
@@ -70,7 +87,11 @@ function BoxOffice({ cast }: { cast: string[] }) {
   return (
     <div className="bo">
       {/* the booth: generated art, no text in it, fading into the page */}
-      <div className="bo-hero" role="img" aria-label="A glowing vintage cinema box office">
+      <div
+        className="bo-hero"
+        role="img"
+        aria-label="A glowing vintage cinema box office"
+      >
         {/* lettered onto the blank sign panel in the artwork */}
         <span className="bo-sign">Box office</span>
       </div>
@@ -138,8 +159,69 @@ function BoxOffice({ cast }: { cast: string[] }) {
   );
 }
 
-function Ticket({ ticket }: { ticket: TicketData }) {
+const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const FEED_STEPS = 18;
+
+/**
+ * The ticket coming out of the box-office printer: a slot at the top, the paper fed out in motor
+ * steps (one click and one buzz each), a snip from the cutter, then the ticket drops free.
+ */
+function usePrinter(print: boolean) {
+  const reduced = () => matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const [stage, setStage] = useState<"feed" | "cut" | "done">(
+    print ? "feed" : "done",
+  );
+  const feed = useMotionValue(print ? 0 : 1);
+  const drop = useMotionValue(0);
+  const y = useTransform(
+    () =>
+      `calc(${((feed.get() - 1) * 100).toFixed(2)}% + ${drop.get().toFixed(1)}px)`,
+  );
+
+  // Runs once on mount (motion values are stable). Strict mode runs it twice in dev: the first run is
+  // cancelled by its cleanup before it moves anything. Stage changes must NOT re-run it, or the cleanup
+  // would kill the loop mid-print.
+  useEffect(() => {
+    if (feed.get() === 1) return; // nothing to print
+    let dead = false;
+    (async () => {
+      if (reduced()) {
+        feed.set(1);
+        return setStage("done");
+      }
+      scrollTo({ top: 0, behavior: "smooth" });
+      await wait(380); // the machine wakes up first
+      for (let i = 1; i <= FEED_STEPS && !dead; i++) {
+        printStep();
+        buzz(6);
+        await animate(feed, i / FEED_STEPS, {
+          duration: 0.06,
+          ease: "easeOut",
+        });
+        await wait(30 + Math.random() * 45);
+      }
+      if (dead) return;
+      printCut();
+      buzz([20, 30, 20]);
+      setStage("cut");
+      // the paper drops free while the machine fades out; wait for both
+      await Promise.all([
+        animate(drop, 12, { type: "spring", stiffness: 380, damping: 14 }),
+        wait(700),
+      ]);
+      if (!dead) setStage("done");
+    })();
+    return () => {
+      dead = true;
+    };
+  }, [feed, drop]);
+
+  return { stage, y };
+}
+
+function Ticket({ ticket, print }: { ticket: TicketData; print: boolean }) {
   const torn = ticket.admittedAt != null;
+  const printer = usePrinter(print && !torn);
   const progress = useMotionValue(torn ? 1 : 0);
   const seamRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
@@ -239,118 +321,129 @@ function Ticket({ ticket }: { ticket: TicketData }) {
   };
 
   return (
-    <div className={`tk${ticket.star ? " cast" : ""}${torn ? " torn" : ""}`}>
-      <div className="tk-paper">
-        {/* roughens the perforated edges so torn paper shows fibres instead of a vector-clean cut */}
-        <svg
-          width="0"
-          height="0"
-          style={{ position: "absolute" }}
-          aria-hidden="true"
-        >
-          <filter id="tk-rough" x="-5%" y="-60%" width="110%" height="220%">
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency="0.85 0.3"
-              numOctaves="2"
-              seed="7"
-              result="noise"
-            />
-            <feDisplacementMap
-              in="SourceGraphic"
-              in2="noise"
-              scale="5"
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </svg>
-        <div className="tk-bodywrap">
-          {/* dark backing so the punched holes read as holes even while the stub swings up behind them */}
-          <i className="tk-holeback" aria-hidden="true" />
-          <section className="tk-body">
-            <div className="tk-top">
-              <span>Studio 09 presents</span>
-              {ticket.star && <em>★ Cast</em>}
-            </div>
-            <h1>The Premiere</h1>
-            <p className="tk-sub">Opening night · one night only</p>
-            <div className="tk-name">
-              <small>Admit one</small>
-              <b>{ticket.name}</b>
-            </div>
-            <div className="tk-meta">
-              <div>
-                <small>Date</small>
-                <b>07 Oct</b>
+    <div
+      className={`tk${ticket.star ? " cast" : ""}${torn ? " torn" : ""}${print ? " printed" : ""}${printer.stage !== "done" ? " printing" : ""}`}
+    >
+      {/* the clip lives on this static wrapper: put on the moving paper it would travel with it */}
+      <div className="tk-feed">
+        {printer.stage !== "done" && (
+          <div className={`tk-machine ${printer.stage}`} aria-hidden="true">
+            <i className="tk-led" />
+            <span className="tk-slot" />
+          </div>
+        )}
+        <motion.div className="tk-paper" style={{ y: printer.y }}>
+          {/* roughens the perforated edges so torn paper shows fibres instead of a vector-clean cut */}
+          <svg
+            width="0"
+            height="0"
+            style={{ position: "absolute" }}
+            aria-hidden="true"
+          >
+            <filter id="tk-rough" x="-5%" y="-60%" width="110%" height="220%">
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency="0.85 0.3"
+                numOctaves="2"
+                seed="7"
+                result="noise"
+              />
+              <feDisplacementMap
+                in="SourceGraphic"
+                in2="noise"
+                scale="5"
+                xChannelSelector="R"
+                yChannelSelector="G"
+              />
+            </filter>
+          </svg>
+          <div className="tk-bodywrap">
+            {/* dark backing so the punched holes read as holes even while the stub swings up behind them */}
+            <i className="tk-holeback" aria-hidden="true" />
+            <section className="tk-body">
+              <div className="tk-top">
+                <span>Studio 09 presents</span>
+                {ticket.star && <em>★ Cast</em>}
               </div>
-              <div>
-                <small>Row</small>
-                <b>{rowOf(ticket.seat)}</b>
+              <h1>The Premiere</h1>
+              <p className="tk-sub">Opening night · one night only</p>
+              <div className="tk-name">
+                <small>Admit one</small>
+                <b>{ticket.name}</b>
               </div>
-              <div>
-                <small>Seat</small>
-                <b>{pad2(numOf(ticket.seat))}</b>
+              <div className="tk-meta">
+                <div>
+                  <small>Date</small>
+                  <b>07 Oct</b>
+                </div>
+                <div>
+                  <small>Row</small>
+                  <b>{rowOf(ticket.seat)}</b>
+                </div>
+                <div>
+                  <small>Seat</small>
+                  <b>{pad2(numOf(ticket.seat))}</b>
+                </div>
               </div>
-            </div>
-            {torn && (
-              <div className="tk-stamp" aria-live="polite">
-                Admitted
+              {torn && (
+                <div className="tk-stamp" aria-live="polite">
+                  Admitted
+                </div>
+              )}
+            </section>
+
+            <span className="tk-fibre below" aria-hidden="true">
+              <i />
+            </span>
+            {!torn && (
+              <div
+                className="tk-seam"
+                ref={seamRef}
+                role="slider"
+                tabIndex={0}
+                aria-label="Tear the ticket along the perforation"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={0}
+                onKeyDown={(e) => {
+                  if (
+                    e.key === "Enter" ||
+                    e.key === " " ||
+                    e.key === "ArrowRight"
+                  ) {
+                    e.preventDefault();
+                    tearByKey();
+                  }
+                }}
+                onPointerDown={onDown}
+                onPointerMove={onMove}
+                onPointerUp={onUp}
+                onPointerCancel={onUp}
+              >
+                <motion.i
+                  className={`tk-handle${hint ? " nudge" : ""}`}
+                  style={{ left: handleLeft }}
+                />
               </div>
             )}
-          </section>
+          </div>
 
-          <span className="tk-fibre below" aria-hidden="true">
-            <i />
-          </span>
-          {!torn && (
-            <div
-              className="tk-seam"
-              ref={seamRef}
-              role="slider"
-              tabIndex={0}
-              aria-label="Tear the ticket along the perforation"
-              aria-valuemin={0}
-              aria-valuemax={100}
-              aria-valuenow={0}
-              onKeyDown={(e) => {
-                if (
-                  e.key === "Enter" ||
-                  e.key === " " ||
-                  e.key === "ArrowRight"
-                ) {
-                  e.preventDefault();
-                  tearByKey();
-                }
-              }}
-              onPointerDown={onDown}
-              onPointerMove={onMove}
-              onPointerUp={onUp}
-              onPointerCancel={onUp}
-            >
-              <motion.i
-                className={`tk-handle${hint ? " nudge" : ""}`}
-                style={{ left: handleLeft }}
-              />
-            </div>
-          )}
-        </div>
-
-        <motion.div
-          className="tk-stubwrap"
-          style={{ rotate, y, opacity: dropOpacity, transformOrigin: hinge }}
-          aria-hidden={torn}
-        >
-          <span className="tk-fibre above" aria-hidden="true">
-            <i />
-          </span>
-          <section className="tk-stub">
-            <StubInner ticket={ticket} />
-          </section>
+          <motion.div
+            className="tk-stubwrap"
+            style={{ rotate, y, opacity: dropOpacity, transformOrigin: hinge }}
+            aria-hidden={torn}
+          >
+            <span className="tk-fibre above" aria-hidden="true">
+              <i />
+            </span>
+            <section className="tk-stub">
+              <StubInner ticket={ticket} />
+            </section>
+          </motion.div>
         </motion.div>
       </div>
 
-      {torn ? (
+      {printer.stage !== "done" ? null : torn ? (
         <div className="tk-after">
           <b>Enjoy the show, {ticket.name.split(" ")[0]}.</b>
           <span>

@@ -143,14 +143,73 @@
   --paper: #f0cf74;
   --accent: #5a1013;
 }
+.tk { position: relative; }
 .tk-paper {
   position: relative;
   filter: drop-shadow(0 22px 34px rgba(0, 0, 0, 0.6));
-  animation: tk-print 0.9s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+  animation: tk-appear 0.5s ease both;
 }
-@keyframes tk-print {
-  from { transform: translateY(-110%) rotate(-3deg); }
+@keyframes tk-appear {
+  from { opacity: 0; }
 }
+/* while printing, nothing above the slot exists yet: the paper is still inside the machine */
+.tk-feed { position: relative; }
+/* a printed ticket must not fade in a second time once the machine goes */
+.tk.printed .tk-paper { animation: none; }
+.tk.printing .tk-feed { clip-path: inset(0 -60px -140px -60px); }
+.tk.printing .tk-after { visibility: hidden; }
+
+/* ---------- the box-office printer: a slot the ticket feeds out of ---------- */
+.tk-machine {
+  position: absolute;
+  z-index: 6;
+  left: -8px;
+  right: -8px;
+  top: -19px;
+  height: 38px;
+  border-radius: 9px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06), transparent 30%, transparent 70%, rgba(255, 255, 255, 0.06)),
+    linear-gradient(180deg, #3d3532, #241d1a 50%, #16110f);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 -1px 0 rgba(0, 0, 0, 0.6) inset,
+    0 10px 22px rgba(0, 0, 0, 0.6);
+  animation: tk-machine-in 0.3s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+@keyframes tk-machine-in {
+  from { opacity: 0; transform: translateY(-12px); }
+}
+.tk-machine.cut { animation: tk-machine-out 0.45s 0.15s ease-in forwards; }
+@keyframes tk-machine-out {
+  to { opacity: 0; transform: translateY(-18px); }
+}
+.tk-slot {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 50%;
+  height: 9px;
+  transform: translateY(-50%);
+  border-radius: 3px;
+  background: #050303;
+  box-shadow: inset 0 2px 3px #000, 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+.tk-led {
+  position: absolute;
+  right: 12px;
+  top: 7px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #ffb02e;
+  box-shadow: 0 0 6px #ffb02e;
+  animation: tk-led 0.32s steps(2, jump-none) infinite;
+}
+@keyframes tk-led {
+  to { background: #5a3a10; box-shadow: none; }
+}
+.tk-machine.cut .tk-led { animation: none; background: #6fdc5a; box-shadow: 0 0 6px #6fdc5a; }
 .tk-bodywrap { position: relative; z-index: 2; }
 .tk-holeback { position: absolute; left: var(--notch); right: var(--notch); bottom: 0; height: 8px; background: var(--night); z-index: 0; }
 .tk-body,
@@ -336,7 +395,7 @@
 .tk-alt.quiet { box-shadow: none; color: var(--ink-soft); text-transform: none; letter-spacing: 0; font-family: var(--serif); font-style: italic; font-weight: 500; font-size: 16px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .tk-paper, .tk-stamp, .pulse-hint, .tk-handle.nudge { animation: none; }
+  .tk-paper, .tk-stamp, .pulse-hint, .tk-handle.nudge, .tk-machine, .tk-led { animation: none; }
 }
 
 a.tk-alt { display: inline-block; text-decoration: none; background: var(--gold); color: var(--night); box-shadow: 0 6px 0 var(--gold-shadow); font-size: 16px; padding: 12px 22px; margin-top: 6px; }

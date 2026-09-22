@@ -73,6 +73,17 @@ export const ripFinish = () => {
   burst(0.18, 0.5, 4200);
 };
 
+/** one step of the box-office printer's feed motor */
+export const printStep = () => {
+  burst(0.035, 0.32, 1000 + Math.random() * 400);
+  burst(0.02, 0.22, 320);
+};
+/** the guillotine cutting the ticket free */
+export const printCut = () => {
+  burst(0.11, 0.7, 3200);
+  burst(0.09, 0.45, 900);
+};
+
 export function buzz(pattern: number | number[]) {
   try {
     navigator.vibrate?.(pattern);

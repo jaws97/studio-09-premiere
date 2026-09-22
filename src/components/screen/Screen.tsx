@@ -607,17 +607,17 @@ const MAKERS: { name: string; role: string; line: string }[] = [
   {
     name: "Kavya",
     role: "Executive producer",
-    line: "Created with love and questionable life choices. Sequel confirmed, regrets pending.",
+    line: "Green-lit twenty-seven films in one meeting. The meeting was about something else.",
   },
   {
     name: "Mohana",
-    role: "Head of casting and chaos",
-    line: "Kept twenty-seven secrets for a month. Cracked twice. Recovered gracefully.",
+    role: "Casting director",
+    line: "Collected twenty-seven photos without once saying what for. Interrogated daily. Never cracked.",
   },
   {
     name: "Arokia",
-    role: "Director of code",
-    line: "Coded with Claude and coffee. Any bugs are the popcorn's fault.",
+    role: "Special effects and stunts",
+    line: "Shot entirely on location in a browser. The hot dog did his own stunts.",
   },
 ];
 

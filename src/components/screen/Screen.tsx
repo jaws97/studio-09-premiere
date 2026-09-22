@@ -656,6 +656,10 @@ function Credits({ wishes }: { wishes: Wish[] }) {
         )}
         <p className="fin">No birthdays were harmed in the making of this season.</p>
         <p className="cake">Cake in the lobby.</p>
+        {/* the post-credits tag */}
+        <p className="returns">
+          Party People will return in October.<small>Contractually obligated.</small>
+        </p>
       </div>
     </div>
   );

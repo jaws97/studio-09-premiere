@@ -591,3 +591,120 @@
   .float { animation: float-still 4.2s ease both; }
   @keyframes float-still { 0%, 100% { opacity: 0; } 15%, 85% { opacity: 1; } }
 }
+
+/* ---------- intermission: popcorn, soda and a hot dog on parade ---------- */
+.intermission {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  justify-items: center;
+  align-items: center;
+  padding: 90px 96px 70px;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 100%, rgba(226, 181, 68, 0.22), transparent 70%),
+    repeating-linear-gradient(-55deg, rgba(0, 0, 0, 0.22) 0 60px, transparent 60px 120px),
+    linear-gradient(180deg, #4a0f12, var(--night) 80%);
+  animation: inter-in 0.6s cubic-bezier(0.2, 0.9, 0.25, 1) both;
+}
+@keyframes inter-in {
+  from { opacity: 0; transform: scale(1.08); }
+}
+.inter-frame { padding: 34px 70px 40px; }
+.inter-frame h1 { font-size: 150px; line-height: 0.9; }
+.inter-frame h1 span { display: block; font-size: 0.2em; letter-spacing: 0.22em; margin-top: 10px; color: var(--gold-2); }
+.parade { display: flex; align-items: flex-end; gap: 90px; height: 480px; }
+.snack { display: block; overflow: visible; }
+/* the wrapper marches; the character inside does its own party trick now and then */
+.snack-wrap { position: relative; animation: march 0.8s ease-in-out infinite; }
+.soda-wrap { animation-delay: 0.15s; }
+.hotdog-wrap { animation-delay: 0.35s; }
+.soda { width: 220px; transform-origin: 50% 100%; animation: slurp 5s 2s ease-in-out infinite; }
+.bucket { width: 320px; transform-origin: 50% 90%; animation: shimmy 6s 1.5s ease-in-out infinite; }
+.hotdog { width: 340px; transform-origin: 50% 55%; animation: flip 7s 3s cubic-bezier(0.5, -0.2, 0.3, 1.25) infinite; }
+@keyframes march {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-26px) rotate(4deg); }
+}
+/* soda takes a long pull on its own straw */
+@keyframes slurp {
+  0%, 70%, 100% { transform: scale(1); }
+  76% { transform: scale(1.1, 0.88); }
+  82% { transform: scale(0.92, 1.1); }
+  88% { transform: scale(1.05, 0.96); }
+  94% { transform: scale(1); }
+}
+/* the bucket gets the wobbles */
+@keyframes shimmy {
+  0%, 82%, 100% { transform: rotate(0); }
+  85% { transform: rotate(-12deg); }
+  88% { transform: rotate(12deg); }
+  91% { transform: rotate(-9deg); }
+  94% { transform: rotate(9deg); }
+  97% { transform: rotate(0); }
+}
+/* the hot dog does a full backflip and lands like nothing happened */
+@keyframes flip {
+  0%, 78% { transform: rotate(0) translateY(0); }
+  84% { transform: rotate(-180deg) translateY(-60px); }
+  90%, 100% { transform: rotate(-360deg) translateY(0); }
+}
+/* everybody blinks, nobody at the same time */
+.snack .face circle { transform-box: fill-box; transform-origin: 50% 50%; animation: blink 4s infinite; }
+.soda .face circle { animation-delay: 1.3s; }
+.hotdog .face circle { animation-delay: 2.6s; }
+@keyframes blink {
+  0%, 92%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.08); }
+}
+.snack .leg { transform-box: fill-box; transform-origin: 50% 0; animation: step 0.8s ease-in-out infinite alternate; fill: #1c120e; }
+.snack .leg.r { animation-delay: -0.8s; }
+@keyframes step {
+  from { transform: rotate(-22deg); }
+  to { transform: rotate(22deg); }
+}
+.snack .arm { fill: none; stroke: #1c120e; stroke-width: 12; stroke-linecap: round; transform-box: fill-box; animation: wave 0.8s ease-in-out infinite alternate; }
+.snack .arm.l { transform-origin: 100% 100%; }
+.snack .arm.r { transform-origin: 0 100%; animation-delay: -0.8s; }
+@keyframes wave {
+  from { transform: rotate(-14deg); }
+  to { transform: rotate(14deg); }
+}
+.snack .straw { fill: #e2b544; }
+.snack .face circle { fill: #1c120e; }
+.snack .face path { fill: none; stroke: #1c120e; stroke-width: 7; stroke-linecap: round; }
+/* kernels burst from the mound, arc out and tumble down past the bucket */
+.kernels { position: absolute; left: 50%; top: 60px; width: 0; height: 0; z-index: 2; }
+.kernels i {
+  position: absolute;
+  left: var(--x0);
+  top: 0;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 46% 54% 50% 50% / 55% 45% 55% 45%;
+  background: radial-gradient(circle at 35% 30%, #fff8e1, #f5e3ad 55%, #d8ad4a);
+  box-shadow: inset -3px -3px 0 rgba(160, 110, 30, 0.35);
+  animation: kernel 2.9s var(--d) cubic-bezier(0.3, 0.8, 0.6, 1) infinite;
+}
+@keyframes kernel {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.2) rotate(0); }
+  10% { opacity: 1; transform: translate(calc(var(--dx) * 0.3), -110px) scale(1) rotate(120deg); }
+  40% { opacity: 1; transform: translate(calc(var(--dx) * 0.8), -140px) scale(1) rotate(300deg); }
+  100% { opacity: 0; transform: translate(var(--dx), 420px) scale(0.9) rotate(720deg); }
+}
+/* while the doors are open the same gang strolls along the bottom edge, small and slow */
+.doors-stroll { position: absolute; left: 0; bottom: -92px; transform-origin: 0 100%; animation: stroll 34s linear infinite; pointer-events: none; }
+@keyframes stroll {
+  from { transform: translateX(-520px) scale(0.36); }
+  to { transform: translateX(1980px) scale(0.36); }
+}
+.inter-sub { margin: 0; font-style: italic; font-size: 42px; color: var(--cream); text-align: center; max-width: 1400px; animation: caption-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both; }
+@keyframes caption-in {
+  from { opacity: 0; transform: scale(0.6) rotate(-3deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .snack-wrap, .snack, .snack .leg, .snack .arm, .snack .face circle, .kernels i, .inter-sub, .doors-stroll { animation: none; }
+  .doors-stroll { transform: translateX(96px) scale(0.36); }
+  .kernels i { opacity: 0; }
+}

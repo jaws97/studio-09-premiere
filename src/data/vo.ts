@@ -28,6 +28,10 @@ export const showCues = {
     text: "Phones out, everyone. Find the bravo button, and let the cast hear it. Make that needle move!",
   },
   ovation: { id: "cue-ovation", text: "A standing ovation! The house has spoken." },
+  intermission: {
+    id: "cue-intermission",
+    text: "Ladies and gentlemen, a short intermission. Popcorn is being served in the lobby. Don't go anywhere. We know where you sit.",
+  },
   credits: { id: "cue-credits", text: "Thank you for coming. House lights up after the credits. Cake is in the lobby." },
 } satisfies Record<string, VoLine>;
 

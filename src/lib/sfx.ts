@@ -122,6 +122,25 @@ export function fanfare() {
 
 type Loop = { stop: () => void; level?: (v: number) => void };
 
+/** popcorn machine: kernels going off at random, a soft thump under each pop */
+export function popcorn(): Loop {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  let dead = false;
+  const pop = () => {
+    if (dead) return;
+    noise("bandpass", 1400 + Math.random() * 2200, 1.4, { a: 0.002, d: 0.045 + Math.random() * 0.04, peak: 0.3 });
+    tone(150 + Math.random() * 120, "sine", { a: 0.002, d: 0.09, peak: 0.22 }, 60);
+    timer = setTimeout(pop, 60 + Math.random() * 280);
+  };
+  timer = setTimeout(pop, 100);
+  return {
+    stop() {
+      dead = true;
+      clearTimeout(timer);
+    },
+  };
+}
+
 /** projector running: motor hum, shutter flutter, the odd sprocket tick */
 export function projector(): Loop {
   if (!ctx || !noiseBuf || !master) return { stop() {} };

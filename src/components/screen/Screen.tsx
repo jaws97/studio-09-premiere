@@ -64,17 +64,18 @@ export function Screen() {
     document.documentElement.requestFullscreen?.().catch(() => {});
   };
 
-  // Keyboard fallback for the projector laptop if the host remote dies.
+  // Keyboard control on the projector laptop: the host drives from here as much as from /host.
+  const onKey = useEffectEvent((e: KeyboardEvent) => {
+    if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") void dispatch({ type: "next" });
+    else if (e.key === "ArrowLeft" || e.key === "PageUp") void dispatch({ type: "prev" });
+    else if (e.key === "Home") void dispatch({ type: "goto", phase: "doors" });
+    else if (e.key === "i") void dispatch({ type: "intermission", on: !state.intermission });
+    else if (e.key === "f") document.documentElement.requestFullscreen?.();
+  });
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight" || e.key === " " || e.key === "PageDown") void dispatch({ type: "next" });
-      else if (e.key === "ArrowLeft" || e.key === "PageUp") void dispatch({ type: "prev" });
-      else if (e.key === "Home") void dispatch({ type: "goto", phase: "doors" });
-      else if (e.key === "f") document.documentElement.requestFullscreen?.();
-    };
     addEventListener("keydown", onKey);
     return () => removeEventListener("keydown", onKey);
-  }, [dispatch]);
+  }, []);
 
   return (
     <div className="screen-root">
@@ -96,17 +97,18 @@ export function Screen() {
             {state.phase === "credits" && <Credits wishes={state.wishes} />}
           </div>
         )}
+        {ready && opened && state.intermission && <Intermission />}
         {ready && opened && !armed && (
           <button type="button" className="arm" onClick={armRoom}>
             <b>Click to arm sound</b>
-            <span>and go fullscreen · ← → step the show · host remote at /host</span>
+            <span>and go fullscreen · ← → step the show · i popcorn break · host remote at /host</span>
           </button>
         )}
         {FILM_PHASES.has(state.phase) && <div className="damage" aria-hidden="true" />}
         <div className="grain" aria-hidden="true" />
         <div className="vignette" aria-hidden="true" />
         <div className="phase-chip">
-          {PHASE_LABEL[state.phase]}
+          {state.intermission ? "Intermission" : PHASE_LABEL[state.phase]}
           {!online && " · reconnecting…"}
         </div>
         {ready && <Reactions wishes={state.wishes} />}
@@ -218,6 +220,9 @@ function Doors({ seated, photos }: { seated: Seated[]; photos: string[] }) {
           </div>
         </div>
         <Paparazzi photos={photos} />
+      </div>
+      <div className="doors-stroll" aria-hidden="true">
+        <Parade />
       </div>
       <div className="doors-right">
         <div className="house-head">
@@ -689,6 +694,132 @@ function Reactions({ wishes }: { wishes: Wish[] }) {
             <b>{w.name}</b>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+/* ----------------------------------------------------------- intermission */
+
+/** kernels leaving the bucket: start offset, sideways drift, delay and size, all in stage px */
+const KERNELS = [
+  [-6, -150, 0.0, 34],
+  [10, 120, 0.25, 28],
+  [-18, -60, 0.5, 40],
+  [22, 190, 0.7, 30],
+  [0, 40, 0.95, 36],
+  [-24, -210, 1.15, 26],
+  [14, 90, 1.4, 32],
+  [-10, -110, 1.65, 38],
+  [26, 160, 1.9, 28],
+  [-2, -20, 2.1, 30],
+  [18, 230, 2.35, 34],
+  [-20, -170, 2.6, 26],
+] as const;
+
+/** one at a time under the parade, a new one every few seconds */
+const GOOFY = [
+  "Popcorn is being served. It is not a prop. Eat it.",
+  "Don't go anywhere. Seriously. We counted you.",
+  "Bathroom break? Sprint. We are timing people.",
+  "If you leave now, the hot dog wins.",
+  "Please do not boo the soda. The soda is trying.",
+  "Your seat will be given to someone with better posture.",
+  "This intermission is sponsored by nobody. Nobody asked for it.",
+  "The popcorn bucket has feelings. Wave back.",
+];
+
+/**
+ * The popcorn break: a "let's all go to the lobby" snipe on top of whatever is playing. A striped
+ * bucket, a soda and a hot dog on parade, kernels popping out of the bucket the whole time, and a
+ * fresh bit of nonsense under them every few seconds.
+ */
+function Intermission() {
+  useCue(() => say(showCues.intermission), 700);
+  const [line, setLine] = useState(0);
+  useEffect(() => {
+    const t = setInterval(() => setLine((n) => (n + 1) % GOOFY.length), 4200);
+    return () => clearInterval(t);
+  }, []);
+  useEffect(() => {
+    let loop: ReturnType<typeof sfx.popcorn> | null = null;
+    const t = setTimeout(() => (loop = sfx.popcorn()), 250);
+    return () => {
+      clearTimeout(t);
+      loop?.stop();
+    };
+  }, []);
+
+  return (
+    <div className="intermission">
+      <div className="frame inter-frame">
+        <Bulbs step={30} />
+        <h1>
+          Intermission<span>Don&apos;t go anywhere</span>
+        </h1>
+      </div>
+
+      <Parade />
+
+      <p className="inter-sub" key={line}>
+        {GOOFY[line]}
+      </p>
+    </div>
+  );
+}
+
+/** the snack gang: soda, popcorn bucket and hot dog marching on the spot, kernels popping the whole time */
+function Parade() {
+  return (
+    <div className="parade" aria-hidden="true">
+      <div className="snack-wrap soda-wrap">
+      <svg className="snack soda" viewBox="0 0 200 360">
+        <g className="leg l"><rect x="70" y="300" width="18" height="40" rx="9" /><ellipse cx="72" cy="345" rx="26" ry="12" /></g>
+        <g className="leg r"><rect x="112" y="300" width="18" height="40" rx="9" /><ellipse cx="128" cy="345" rx="26" ry="12" /></g>
+        <rect className="straw" x="118" y="14" width="14" height="130" rx="7" transform="rotate(8 125 80)" />
+        <path d="M48 142 H152 L138 310 Q100 322 62 310 Z" fill="#2f5fa8" />
+        <path d="M56 205 H144 L140 250 H60 Z" fill="#f3e7cf" />
+        <rect x="36" y="120" width="128" height="26" rx="10" fill="#f3e7cf" />
+        <rect x="44" y="108" width="112" height="16" rx="8" fill="#e2b544" />
+        <g className="face"><circle cx="82" cy="225" r="7" /><circle cx="118" cy="225" r="7" /><path d="M84 238 q16 14 32 0" /></g>
+      </svg>
+      </div>
+
+      <div className="snack-wrap bucket-wrap">
+        <div className="kernels">
+          {KERNELS.map(([x0, dx, d, s], i) => (
+            <i key={i} style={{ "--x0": `${x0}px`, "--dx": `${dx}px`, "--d": `${d}s`, "--s": `${s}px` } as React.CSSProperties} />
+          ))}
+        </div>
+        <svg className="snack bucket" viewBox="0 0 260 400">
+          <defs>
+            <clipPath id="bucket-clip"><path d="M50 150 H210 L190 365 Q130 380 70 365 Z" /></clipPath>
+          </defs>
+          <g className="leg l"><rect x="92" y="340" width="20" height="44" rx="10" /><ellipse cx="94" cy="388" rx="30" ry="12" /></g>
+          <g className="leg r"><rect x="148" y="340" width="20" height="44" rx="10" /><ellipse cx="166" cy="388" rx="30" ry="12" /></g>
+          <path className="arm l" d="M52 210 Q20 190 14 150" />
+          <path className="arm r" d="M208 210 Q240 190 246 150" />
+          <path d="M50 150 H210 L190 365 Q130 380 70 365 Z" fill="#f7f1e4" />
+          <g clipPath="url(#bucket-clip)" fill="#b3262b">
+            <rect x="46" y="140" width="24" height="260" /><rect x="94" y="140" width="24" height="260" /><rect x="142" y="140" width="24" height="260" /><rect x="190" y="140" width="24" height="260" />
+          </g>
+          <rect x="38" y="138" width="184" height="22" rx="9" fill="#b3262b" />
+          <g fill="#f5e3ad" stroke="#d8ad4a" strokeWidth="4">
+            <circle cx="80" cy="118" r="30" /><circle cx="180" cy="118" r="30" /><circle cx="130" cy="96" r="36" /><circle cx="105" cy="132" r="26" /><circle cx="155" cy="132" r="26" /><circle cx="60" cy="140" r="20" /><circle cx="200" cy="140" r="20" /><circle cx="130" cy="140" r="24" />
+          </g>
+          <g className="face"><circle cx="105" cy="230" r="9" /><circle cx="155" cy="230" r="9" /><path d="M100 262 q30 30 60 0" /></g>
+        </svg>
+      </div>
+
+      <div className="snack-wrap hotdog-wrap">
+      <svg className="snack hotdog" viewBox="0 0 320 260">
+        <g className="leg l"><rect x="110" y="196" width="18" height="40" rx="9" /><ellipse cx="112" cy="242" rx="26" ry="12" /></g>
+        <g className="leg r"><rect x="190" y="196" width="18" height="40" rx="9" /><ellipse cx="206" cy="242" rx="26" ry="12" /></g>
+        <rect x="20" y="96" width="280" height="96" rx="48" fill="#d9a35b" />
+        <rect x="30" y="72" width="260" height="70" rx="35" fill="#b8402f" />
+        <path d="M60 106 l22 -18 l22 18 l22 -18 l22 18 l22 -18 l22 18 l22 -18 l22 18 l22 -18" fill="none" stroke="#f4d21a" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round" />
+        <g className="face"><circle cx="130" cy="112" r="7" /><circle cx="190" cy="112" r="7" /><path d="M136 124 q24 16 48 0" /></g>
+      </svg>
       </div>
     </div>
   );

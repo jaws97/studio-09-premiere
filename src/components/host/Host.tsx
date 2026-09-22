@@ -36,6 +36,14 @@ export function Host() {
           Next ▶
         </button>
       </div>
+      {/* the popcorn snipe sits on top of the current phase; Next / Back end it too */}
+      <button
+        type="button"
+        className={`inter${state.intermission ? " on" : ""}`}
+        onClick={() => dispatch({ type: "intermission", on: !state.intermission })}
+      >
+        🍿 {state.intermission ? "End the intermission" : "Popcorn break"}
+      </button>
 
       <section>
         <h2>Run of show</h2>

@@ -53,6 +53,8 @@ export type ShowState = {
   photos: string[];
   /** last announcer cue the host fired; `n` changes every time so repeats still play */
   cue: { id: AnnounceCue; n: number } | null;
+  /** popcorn break: an overlay on top of whatever phase is playing; any step of the show ends it */
+  intermission: boolean;
   rev: number;
 };
 
@@ -68,6 +70,7 @@ export const initialShow: ShowState = {
   wishes: [],
   photos: [],
   cue: null,
+  intermission: false,
   rev: 0,
 };
 
@@ -79,24 +82,29 @@ export type HostAction =
   | { type: "premiere"; index: number }
   | { type: "mute"; muted: boolean }
   | { type: "announce"; cue: AnnounceCue }
+  | { type: "intermission"; on: boolean }
   | { type: "simulate" }
   | { type: "clap"; n: number }
   | { type: "reset" };
 
 export function stepShow(s: ShowState, a: HostAction, films: number): ShowState {
   const i = PHASES.indexOf(s.phase);
+  // moving the show along always ends a popcorn break
+  const go = (next: Partial<ShowState>): ShowState => ({ ...s, ...next, intermission: false });
   switch (a.type) {
     case "next":
       if (a.ifPhase && a.ifPhase !== s.phase) return s;
-      if (s.phase === "premieres" && s.premiere < films - 1) return { ...s, premiere: s.premiere + 1 };
-      return i < PHASES.length - 1 ? { ...s, phase: PHASES[i + 1] } : s;
+      if (s.phase === "premieres" && s.premiere < films - 1) return go({ premiere: s.premiere + 1 });
+      return i < PHASES.length - 1 ? go({ phase: PHASES[i + 1] }) : s;
     case "prev":
-      if (s.phase === "premieres" && s.premiere > 0) return { ...s, premiere: s.premiere - 1 };
-      return i > 0 ? { ...s, phase: PHASES[i - 1] } : s;
+      if (s.phase === "premieres" && s.premiere > 0) return go({ premiere: s.premiere - 1 });
+      return i > 0 ? go({ phase: PHASES[i - 1] }) : s;
     case "goto":
-      return PHASES.includes(a.phase) ? { ...s, phase: a.phase } : s;
+      return PHASES.includes(a.phase) ? go({ phase: a.phase }) : s;
     case "premiere":
-      return a.index >= 0 && a.index < films ? { ...s, phase: "premieres", premiere: a.index } : s;
+      return a.index >= 0 && a.index < films ? go({ phase: "premieres", premiere: a.index }) : s;
+    case "intermission":
+      return { ...s, intermission: !!a.on };
     case "announce":
       return ANNOUNCE_CUES.includes(a.cue) ? { ...s, cue: { id: a.cue, n: (s.cue?.n ?? 0) + 1 } } : s;
     case "mute":

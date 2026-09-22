@@ -606,18 +606,18 @@ function CurtainCall({ state }: { state: ShowState }) {
 const MAKERS: { name: string; role: string; line: string }[] = [
   {
     name: "Kavya",
-    role: "Executive producer",
-    line: "Green-lit twenty-seven films in one meeting. The meeting was about something else.",
+    role: "Executive producer, caterer, bouncer",
+    line: "Approved all this with the words \"sure, whatever\". Has since claimed it was her idea. It was.",
   },
   {
     name: "Mohana",
-    role: "Casting director",
-    line: "Collected twenty-seven photos without once saying what for. Interrogated daily. Never cracked.",
+    role: "Casting director and head of secrets",
+    line: "Was asked \"what's it for?\" three hundred times. Said \"a thing\" three hundred times. Nearly exploded.",
   },
   {
     name: "Arokia",
-    role: "Special effects and stunts",
-    line: "Shot entirely on location in a browser. The hot dog did his own stunts.",
+    role: "Director of code and head of bugs",
+    line: "Built a backflipping hot dog instead of sleeping. If the screen freezes, clap. It won't help, but it feels good.",
   },
 ];
 

@@ -29,7 +29,7 @@ export function Join() {
         <span>{name} · in the house</span>
       </header>
       <Bravo />
-      <Wish name={name} />
+      <Shout name={name} />
       <Paparazzi name={name} />
     </main>
   );
@@ -92,30 +92,54 @@ function Bravo() {
   );
 }
 
-/* ------------------------------------------------------------------- wish */
+/* ------------------------------------------------------------------ shout */
 
-function Wish({ name }: { name: string }) {
+/** one tap each: these fly up the big screen as virtual claps */
+const QUICK = ["👏", "🔥", "❤️", "🎉", "😂", "🍿"];
+
+/**
+ * Shout-outs go straight to the big screen: an emoji floats up like a live
+ * reaction, a line of text pops up as a card, and the text ones roll again
+ * in the end credits.
+ */
+function Shout({ name }: { name: string }) {
   const [text, setText] = useState("");
   const [state, setState] = useState<"idle" | "busy" | "sent" | "failed">("idle");
+  const cooling = useRef(false);
 
-  const send = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (text.trim().length < 2) return;
+  const send = async (body: string) => {
+    if (!body.trim() || cooling.current) return; // one a second is plenty per phone
+    cooling.current = true;
+    setTimeout(() => (cooling.current = false), 800);
     setState("busy");
     const res = await fetch("/api/message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, text }),
+      body: JSON.stringify({ name, text: body }),
     }).catch(() => null);
     if (res?.ok) {
-      setText("");
       setState("sent");
+      buzz(10);
     } else setState("failed");
   };
 
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const body = text;
+    setText("");
+    await send(body);
+  };
+
   return (
-    <form className="j-card" onSubmit={send}>
-      <h2>A line in the credits</h2>
+    <form className="j-card" onSubmit={submit}>
+      <h2>Say it on the big screen</h2>
+      <div className="j-emoji" role="group" aria-label="Quick reactions">
+        {QUICK.map((e) => (
+          <button type="button" key={e} disabled={state === "busy"} onClick={() => send(e)} aria-label={`Send ${e}`}>
+            {e}
+          </button>
+        ))}
+      </div>
       <textarea
         value={text}
         onChange={(e) => {
@@ -124,15 +148,15 @@ function Wish({ name }: { name: string }) {
         }}
         maxLength={80}
         rows={2}
-        placeholder="A wish for tonight's cast…"
+        placeholder="A shout-out for tonight's cast…"
       />
       <div className="j-row">
-        <small>{80 - text.length} left</small>
-        <button type="submit" className="j-btn" disabled={text.trim().length < 2 || state === "busy"}>
-          {state === "busy" ? "Sending…" : "Send to the credits"}
+        <small>{80 - Array.from(text).length} left</small>
+        <button type="submit" className="j-btn" disabled={!text.trim() || state === "busy"}>
+          {state === "busy" ? "Sending…" : "Send"}
         </button>
       </div>
-      {state === "sent" && <p className="ok">Sent. It rolls in the end credits once the host approves it.</p>}
+      {state === "sent" && <p className="ok">It&apos;s up there. Look at the big screen.</p>}
       {state === "failed" && <p className="bad">Didn&apos;t go through. Try again?</p>}
     </form>
   );
@@ -177,12 +201,12 @@ function Paparazzi({ name }: { name: string }) {
   return (
     <section className="j-card">
       <h2>Paparazzi wall</h2>
-      <p>Strike a pose. Approved snaps get pinned up on the big screen.</p>
+      <p>Strike a pose. Your snap goes straight up on the big screen.</p>
       <input ref={input} type="file" accept="image/*" capture="user" hidden onChange={onPick} />
       <button type="button" className="j-btn" disabled={state === "busy"} onClick={() => input.current?.click()}>
         {state === "busy" ? "Developing…" : state === "sent" ? "Take another" : "Take a photo"}
       </button>
-      {state === "sent" && <p className="ok">Got it. Off to the host for a quick look.</p>}
+      {state === "sent" && <p className="ok">Got it. Look up, you&apos;re on the wall.</p>}
       {state === "failed" && <p className="bad">That one didn&apos;t develop. Try again?</p>}
     </section>
   );

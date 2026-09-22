@@ -36,7 +36,8 @@ export const rowOf = (seat: number) => String.fromCharCode(64 + Math.ceil(seat /
 export const numOf = (seat: number) => ((seat - 1) % PER_ROW) + 1;
 
 export type Seated = { seat: number; name: string; star: boolean; at: number };
-export type Wish = { id: string; name: string; text: string };
+/** a guest message; `at` lets the screen show only the ones that just arrived */
+export type Wish = { id: string; name: string; text: string; at: number };
 
 export type ShowState = {
   phase: Phase;
@@ -46,9 +47,9 @@ export type ShowState = {
   /** running total of bravos; the screen derives the needle from its rate of change */
   applause: number;
   muted: boolean;
-  /** approved guest messages, rolled in the end credits */
+  /** guest messages: shown live as they arrive, then rolled in the end credits */
   wishes: Wish[];
-  /** approved paparazzi photo ids, newest last */
+  /** paparazzi photo ids, newest last */
   photos: string[];
   /** last announcer cue the host fired; `n` changes every time so repeats still play */
   cue: { id: AnnounceCue; n: number } | null;

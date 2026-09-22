@@ -25,11 +25,10 @@ export interface ShowStore {
   getTicket(ticketId: string): Promise<Ticket | null>;
   admit(ticketId: string): Promise<Ticket | null>;
   clap(n: number): Promise<void>;
+  /** messages and photos are not moderated: they reach the screen the moment they land */
   addWish(name: string, text: string): Promise<void>;
   addPhoto(name: string, type: string, bytes: Uint8Array): Promise<void>;
-  readPhoto(id: string, includeUnapproved: boolean): Promise<{ type: string; bytes: Uint8Array } | null>;
-  queue(): Promise<{ wishes: PendingWish[]; photos: PendingPhoto[] }>;
-  moderate(kind: "wish" | "photo", id: string, approve: boolean): Promise<void>;
+  readPhoto(id: string): Promise<{ type: string; bytes: Uint8Array } | null>;
 }
 
 const newId = (n = 9) => randomBytes(n).toString("base64url");
@@ -171,8 +170,9 @@ class FileStore implements ShowStore {
 
   async addWish(name: string, text: string) {
     const d = await this.load();
-    d.wishes.push({ id: newId(), name, text, at: Date.now(), status: "pending" });
-    this.touch(d);
+    const w: PendingWish = { id: newId(), name, text, at: Date.now(), status: "approved" };
+    d.wishes.push(w);
+    this.touch(d, { ...d.show, wishes: [...d.show.wishes, { id: w.id, name, text, at: w.at }] });
   }
 
   private photoPath(p: PendingPhoto) {
@@ -181,17 +181,17 @@ class FileStore implements ShowStore {
 
   async addPhoto(name: string, type: string, bytes: Uint8Array) {
     const d = await this.load();
-    const p: PendingPhoto = { id: newId(), name, type, at: Date.now(), status: "pending" };
+    const p: PendingPhoto = { id: newId(), name, type, at: Date.now(), status: "approved" };
     await mkdir(PHOTO_DIR, { recursive: true });
     await writeFile(this.photoPath(p), bytes);
     d.photos.push(p);
-    this.touch(d);
+    this.touch(d, { ...d.show, photos: [...d.show.photos, p.id] });
   }
 
-  async readPhoto(id: string, includeUnapproved: boolean) {
+  async readPhoto(id: string) {
     const d = await this.load();
     const p = d.photos.find((x) => x.id === id);
-    if (!p || (p.status !== "approved" && !includeUnapproved)) return null;
+    if (!p) return null;
     try {
       return { type: p.type, bytes: new Uint8Array(await readFile(this.photoPath(p))) };
     } catch {
@@ -199,27 +199,6 @@ class FileStore implements ShowStore {
     }
   }
 
-  async queue() {
-    const d = await this.load();
-    return {
-      wishes: d.wishes.filter((w) => w.status === "pending"),
-      photos: d.photos.filter((p) => p.status === "pending"),
-    };
-  }
-
-  async moderate(kind: "wish" | "photo", id: string, approve: boolean) {
-    const d = await this.load();
-    const item = (kind === "wish" ? d.wishes : d.photos).find((x) => x.id === id);
-    if (!item || item.status !== "pending") return;
-    item.status = approve ? "approved" : "rejected";
-    if (!approve) return this.touch(d);
-    if (kind === "wish") {
-      const w = item as PendingWish;
-      this.touch(d, { ...d.show, wishes: [...d.show.wishes, { id: w.id, name: w.name, text: w.text }] });
-    } else {
-      this.touch(d, { ...d.show, photos: [...d.show.photos, id] });
-    }
-  }
 }
 
 // One copy of the data per process. The store object itself is rebuilt on every module load, so a hot

@@ -22,7 +22,7 @@ const CAST_SHARE = 0.2; // roughly how many arrivals are tonight's cast
 
 const first = ["Asha", "Vikram", "Meera", "Rohan", "Divya", "Karthik", "Neha", "Arjun", "Pooja", "Imran", "Lakshmi", "Sameer", "Tanvi", "Nikhil", "Farah", "Harish"];
 const last = ["Iyer", "Menon", "Shah", "Reddy", "Kapoor", "Nair", "Das", "Joshi", "Pillai", "Khan", "Rao", "Bose"];
-const wishes = ["Happy birthday, superstars!", "Oscar-worthy, every one of you.", "Sequel when?", "Best cast in the building.", "Cake first, credits later.", "Five stars. Would attend again."];
+const wishes = ["Happy birthday, superstars!", "Oscar-worthy, every one of you.", "Sequel when?", "Best cast in the building.", "Cake first, credits later.", "Five stars. Would attend again.", "👏", "🔥", "🎉", "👏👏👏"];
 
 const lat = [];
 let failed = 0;

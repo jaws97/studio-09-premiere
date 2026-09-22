@@ -13,9 +13,9 @@ npm run dev
 |---|---|---|
 | `/` | everyone, before the night | Teaser lobby. Titles and cast stay sealed until `revealAt` in `src/data/event.ts` (`NEXT_PUBLIC_REVEAL=1` previews the reveal). |
 | `/screen` | projector laptop (PIN) | The show. Always opens on the doors (QR) screen. Click once to arm sound + fullscreen. `←` `→` / space step the show if the remote dies; `Home` returns to doors. After a mid-show refresh, jump back from `/host`. |
-| `/host` | organiser's phone (PIN) | Remote: next/back, jump to phase or premiere, approve messages and photos, mute, rehearsal tools, reset. |
+| `/host` | organiser's phone (PIN) | Remote: next/back, jump to phase or premiere, mute, rehearsal tools, reset. |
 | `/ticket` | guests | Box office → ticket → the usher swipes along the perforation to tear it. Seats the guest on `/screen`. |
-| `/join` | guests, after admission | Bravo button (drives the applause meter), a line for the end credits, paparazzi photo. |
+| `/join` | guests, after admission | Bravo button (drives the applause meter), shout-outs and emoji reactions that appear live on the big screen, paparazzi photo. |
 
 **PIN:** set `HOST_PIN` in `.env.local` (required in production). In development it falls back to `0909`.
 
@@ -46,4 +46,4 @@ The titles stay sealed on `/` until `revealAt` in `src/data/event.ts`; `/screen`
 - `src/server/store.ts` — `ShowStore` seam: file-backed locally (`.data/`), `src/server/supabase-store.ts` on Vercel. Racy writes (bravos, seating, approvals) are single SQL statements or compare-and-swap.
 - `src/app/api/` — guests only ever POST (ticket, admit, clap, message, photo). Only `/screen` and `/host` poll `/api/show`.
 - `src/lib/sfx.ts`, `src/lib/rip.ts` — all sound is synthesised with WebAudio; swap individual cues for recorded files later.
-- Guest messages and photos never reach the screen until approved on `/host`.
+- Nothing is moderated. Messages pop up on the big screen as they arrive (emoji float up, text shows as a card) and text ones roll again in the credits; photos go straight to the paparazzi wall.

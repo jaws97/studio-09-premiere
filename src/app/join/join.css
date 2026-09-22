@@ -44,3 +44,17 @@
   -webkit-tap-highlight-color: transparent;
 }
 .bravo-btn:active { transform: translateY(9px); box-shadow: 0 3px 0 var(--gold-shadow), 0 10px 24px rgba(0, 0, 0, 0.5); }
+
+/* quick reactions: big thumb targets, one tap each */
+.j-emoji { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.j-emoji button {
+  font-size: 30px;
+  line-height: 1;
+  padding: 10px 0;
+  border-radius: 12px;
+  border: 1px solid rgba(226, 181, 68, 0.35);
+  background: #0a0605;
+  -webkit-tap-highlight-color: transparent;
+}
+.j-emoji button:active:not(:disabled) { transform: scale(0.88); background: rgba(226, 181, 68, 0.2); }
+.j-emoji button:disabled { opacity: 0.5; }

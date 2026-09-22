@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { films, pad2 } from "@/data/season";
 import { PHASES, PHASE_LABEL, SEATS, useShow, type AnnounceCue } from "@/lib/show";
 
@@ -9,11 +8,6 @@ const ANNOUNCE: [AnnounceCue, string][] = [
   ["seats", "“Please take your seats”"],
   ["premieres", "“Tonight's premieres…”"],
 ];
-
-type Queue = {
-  wishes: { id: string; name: string; text: string }[];
-  photos: { id: string; name: string }[];
-};
 
 export function Host() {
   const { state, dispatch, ready, online } = useShow();
@@ -42,8 +36,6 @@ export function Host() {
           Next ▶
         </button>
       </div>
-
-      <Moderation />
 
       <section>
         <h2>Run of show</h2>
@@ -126,72 +118,5 @@ export function Host() {
         </div>
       </section>
     </main>
-  );
-}
-
-/** Nothing a guest submits reaches the big screen until it is approved here. */
-function Moderation() {
-  const [queue, setQueue] = useState<Queue>({ wishes: [], photos: [] });
-
-  useEffect(() => {
-    let dead = false;
-    const load = async () => {
-      const res = await fetch("/api/host/queue", { cache: "no-store" }).catch(() => null);
-      if (res?.ok && !dead) setQueue((await res.json()) as Queue);
-    };
-    void load();
-    const t = setInterval(load, 3000);
-    return () => {
-      dead = true;
-      clearInterval(t);
-    };
-  }, []);
-
-  const decide = async (kind: "wish" | "photo", id: string, approve: boolean) => {
-    const res = await fetch("/api/host/moderate", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ kind, id, approve }),
-    }).catch(() => null);
-    if (res?.ok) setQueue((await res.json()) as Queue);
-  };
-
-  const total = queue.wishes.length + queue.photos.length;
-  if (!total) return null;
-  return (
-    <section>
-      <h2>Waiting for approval · {total}</h2>
-      <div className="queue">
-        {queue.photos.map((p) => (
-          <div className="q-item" key={p.id}>
-            {/* eslint-disable-next-line @next/next/no-img-element -- served by our own photo route */}
-            <img src={`/api/photo/${p.id}`} alt={`Photo from ${p.name}`} />
-            <i>{p.name}</i>
-            <div>
-              <button type="button" className="on" onClick={() => decide("photo", p.id, true)}>
-                Approve
-              </button>
-              <button type="button" className="danger" onClick={() => decide("photo", p.id, false)}>
-                Reject
-              </button>
-            </div>
-          </div>
-        ))}
-        {queue.wishes.map((w) => (
-          <div className="q-item" key={w.id}>
-            <q>{w.text}</q>
-            <i>{w.name}</i>
-            <div>
-              <button type="button" className="on" onClick={() => decide("wish", w.id, true)}>
-                Approve
-              </button>
-              <button type="button" className="danger" onClick={() => decide("wish", w.id, false)}>
-                Reject
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }

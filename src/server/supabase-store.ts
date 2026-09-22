@@ -3,7 +3,7 @@ import { randomBytes } from "node:crypto";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { films } from "@/data/season";
 import { initialShow, SEATS, stepShow, type HostAction, type ShowState } from "@/lib/show-core";
-import type { PendingPhoto, PendingWish, ShowStore, Ticket } from "./store";
+import type { ShowStore, Ticket } from "./store";
 
 /**
  * ShowStore for serverless hosts (Vercel), where there is no shared memory or
@@ -155,51 +155,27 @@ export class SupabaseStore implements ShowStore {
   }
 
   async addWish(name: string, text: string) {
-    const { error } = await this.db.from("s09_wishes").insert({ id: newId(), name, text });
+    const id = newId();
+    const { error } = await this.db.from("s09_wishes").insert({ id, name, text, status: "approved" });
     if (error) this.fail("addWish", error);
+    const { error: e2 } = await this.db.rpc("s09_push", { key: "wishes", item: { id, name, text, at: Date.now() } });
+    if (e2) this.fail("addWish/push", e2);
   }
 
   async addPhoto(name: string, type: string, bytes: Uint8Array) {
     const id = newId();
     const up = await this.db.storage.from(BUCKET).upload(`${id}.${EXT[type]}`, bytes, { contentType: type });
     if (up.error) this.fail(`addPhoto/upload (is there a private "${BUCKET}" bucket?)`, up.error);
-    const { error } = await this.db.from("s09_photos").insert({ id, name, type });
+    const { error } = await this.db.from("s09_photos").insert({ id, name, type, status: "approved" });
     if (error) this.fail("addPhoto", error);
+    const { error: e2 } = await this.db.rpc("s09_push", { key: "photos", item: id });
+    if (e2) this.fail("addPhoto/push", e2);
   }
 
-  async readPhoto(id: string, includeUnapproved: boolean) {
-    const { data: p } = await this.db.from("s09_photos").select("type, status").eq("id", id).maybeSingle();
-    if (!p || (p.status !== "approved" && !includeUnapproved)) return null;
+  async readPhoto(id: string) {
+    const { data: p } = await this.db.from("s09_photos").select("type").eq("id", id).maybeSingle();
+    if (!p) return null;
     const { data: blob } = await this.db.storage.from(BUCKET).download(`${id}.${EXT[p.type as string]}`);
     return blob ? { type: p.type as string, bytes: new Uint8Array(await blob.arrayBuffer()) } : null;
-  }
-
-  async queue() {
-    const [w, p] = await Promise.all([
-      this.db.from("s09_wishes").select().eq("status", "pending").order("at"),
-      this.db.from("s09_photos").select().eq("status", "pending").order("at"),
-    ]);
-    const ms = <T extends { at: string }>(r: T) => ({ ...r, at: Date.parse(r.at) });
-    return {
-      wishes: ((w.data ?? []) as (Omit<PendingWish, "at"> & { at: string })[]).map(ms),
-      photos: ((p.data ?? []) as (Omit<PendingPhoto, "at"> & { at: string })[]).map(ms),
-    };
-  }
-
-  async moderate(kind: "wish" | "photo", id: string, approve: boolean) {
-    const table = kind === "wish" ? "s09_wishes" : "s09_photos";
-    // the status guard makes approval idempotent: a double tap can't add the item twice
-    const { data, error } = await this.db
-      .from(table)
-      .update({ status: approve ? "approved" : "rejected" })
-      .eq("id", id)
-      .eq("status", "pending")
-      .select()
-      .maybeSingle();
-    if (error) this.fail("moderate", error);
-    if (!data || !approve) return;
-    const item = kind === "wish" ? { id, name: data.name, text: data.text } : id;
-    const { error: e2 } = await this.db.rpc("s09_push", { key: kind === "wish" ? "wishes" : "photos", item });
-    if (e2) this.fail("moderate/push", e2);
   }
 }

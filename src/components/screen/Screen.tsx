@@ -109,6 +109,7 @@ export function Screen() {
           {PHASE_LABEL[state.phase]}
           {!online && " · reconnecting…"}
         </div>
+        {ready && <Reactions wishes={state.wishes} />}
       </div>
     </div>
   );
@@ -635,7 +636,7 @@ function Credits({ wishes }: { wishes: Wish[] }) {
         ))}
         <h3>From the audience</h3>
         {wishes.length ? (
-          wishes.map((w) => (
+          wishes.filter((w) => !isEmojiOnly(w.text)).map((w) => (
             <div className="wish" key={w.id}>
               <q>{w.text}</q>
               <b>{w.name}</b>
@@ -646,6 +647,71 @@ function Credits({ wishes }: { wishes: Wish[] }) {
         )}
         <p className="fin">No birthdays were harmed in the making of this season.</p>
         <p className="cake">Cake in the lobby.</p>
+      </div>
+    </div>
+  );
+}
+
+/* -------------------------------------------------------------- reactions */
+
+const EMOJI_ONLY = /^[\p{Extended_Pictographic}\p{Emoji_Modifier}\u200d\ufe0f\s]+$/u;
+const isEmojiOnly = (s: string) => EMOJI_ONLY.test(s);
+const TOAST_MS = 7000;
+const FLOAT_MS = 4200;
+/** messages older than this on arrival (a laggy poll, a refresh) go to the credits only */
+const STALE_MS = 30_000;
+
+type Live = Wish & { kind: "emoji" | "text"; x: number };
+
+/**
+ * Guest messages as they land, on top of whatever phase is playing: an emoji floats up like a
+ * live-stream reaction, a line of text pops up as a card bottom-left. History is never replayed
+ * after a refresh; it is all in the end credits anyway.
+ */
+function Reactions({ wishes }: { wishes: Wish[] }) {
+  const seen = useRef<Set<string> | null>(null);
+  const [live, setLive] = useState<Live[]>([]);
+
+  useEffect(() => {
+    if (!seen.current) {
+      seen.current = new Set(wishes.map((w) => w.id));
+      return;
+    }
+    const fresh = wishes.filter((w) => !seen.current!.has(w.id));
+    if (!fresh.length) return;
+    fresh.forEach((w) => seen.current!.add(w.id));
+    const now = Date.now();
+    const add: Live[] = fresh
+      .filter((w) => now - w.at < STALE_MS)
+      .map((w) => ({ ...w, kind: isEmojiOnly(w.text) ? "emoji" : "text", x: 6 + Math.random() * 88 }));
+    if (!add.length) return;
+    setLive((l) => [...l, ...add].slice(-16));
+    add.forEach((w) =>
+      setTimeout(
+        () => setLive((l) => l.filter((x) => x.id !== w.id)),
+        w.kind === "emoji" ? FLOAT_MS : TOAST_MS,
+      ),
+    );
+  }, [wishes]);
+
+  const toasts = live.filter((w) => w.kind === "text").slice(-3);
+  return (
+    <div className="live" aria-live="polite">
+      {live
+        .filter((w) => w.kind === "emoji")
+        .map((w) => (
+          <div className="float" key={w.id} style={{ left: `${w.x}%` }}>
+            {w.text}
+            <small>{w.name.split(" ")[0]}</small>
+          </div>
+        ))}
+      <div className="live-toasts">
+        {toasts.map((w) => (
+          <div className="toast" key={w.id}>
+            <q>{w.text}</q>
+            <b>{w.name}</b>
+          </div>
+        ))}
       </div>
     </div>
   );

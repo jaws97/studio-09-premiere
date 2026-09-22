@@ -628,6 +628,14 @@ function Credits({ wishes }: { wishes: Wish[] }) {
       <div className="roll">
         <h2>Studio 09</h2>
         <p className="sub">The September Season</p>
+        <h3>The people who did this</h3>
+        {MAKERS.map((m) => (
+          <div className="maker" key={m.name}>
+            <b>{m.name}</b>
+            <span>{m.role}</span>
+            <q>{m.line}</q>
+          </div>
+        ))}
         <h3>The cast</h3>
         {films.map((f) => (
           <div className="credit" key={f.no}>
@@ -646,14 +654,6 @@ function Credits({ wishes }: { wishes: Wish[] }) {
         ) : (
           <p className="sub">The audience was speechless.</p>
         )}
-        <h3>The people who did this</h3>
-        {MAKERS.map((m) => (
-          <div className="maker" key={m.name}>
-            <b>{m.name}</b>
-            <span>{m.role}</span>
-            <q>{m.line}</q>
-          </div>
-        ))}
         <p className="fin">No birthdays were harmed in the making of this season.</p>
         <p className="cake">Cake in the lobby.</p>
       </div>

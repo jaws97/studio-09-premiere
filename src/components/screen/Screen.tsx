@@ -602,23 +602,11 @@ function CurtainCall({ state }: { state: ShowState }) {
 
 /* ---------------------------------------------------------------- credits */
 
-/** the people who did this, billed the way they deserve; edit freely, this is the bit people remember */
-const MAKERS: { name: string; role: string; line: string }[] = [
-  {
-    name: "Kavya",
-    role: "Executive producer, caterer, bouncer",
-    line: "Approved all this with the words \"sure, whatever\". Has since claimed it was her idea. It was.",
-  },
-  {
-    name: "Mohana",
-    role: "Casting director and head of secrets",
-    line: "Was asked \"what's it for?\" three hundred times. Said \"a thing\" three hundred times. Nearly exploded.",
-  },
-  {
-    name: "Arokia",
-    role: "Director of code and head of bugs",
-    line: "Built a backflipping hot dog instead of sleeping. If the screen freezes, clap. It won't help, but it feels good.",
-  },
+/** the people who did this, in their own words */
+const MAKERS: { name: string; line: string }[] = [
+  { name: "Kavya", line: "Made with passion and absolutely no supervision" },
+  { name: "Jaws", line: "Crafted with care and questionable priorities" },
+  { name: "Mohana", line: "Made with patience, party planning, and a very sharp cake knife" },
 ];
 
 function Credits({ wishes }: { wishes: Wish[] }) {
@@ -631,9 +619,8 @@ function Credits({ wishes }: { wishes: Wish[] }) {
         <h3>The people who did this</h3>
         {MAKERS.map((m) => (
           <div className="maker" key={m.name}>
-            <b>{m.name}</b>
-            <span>{m.role}</span>
             <q>{m.line}</q>
+            <b>{m.name}</b>
           </div>
         ))}
         <h3>The cast</h3>

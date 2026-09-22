@@ -533,9 +533,8 @@
 .wish q { display: block; font-style: italic; font-size: 50px; line-height: 1.2; color: var(--cream); }
 .wish b { display: block; margin-top: 10px; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.2em; font-size: 26px; color: var(--gold); }
 .maker { margin: 70px auto; max-width: 1300px; }
-.maker b { display: block; font-family: var(--display); font-weight: 900; text-transform: uppercase; font-size: 72px; line-height: 1; color: var(--cream); }
-.maker span { display: block; margin-top: 8px; font-family: var(--display); text-transform: uppercase; letter-spacing: 0.3em; font-size: 24px; color: var(--gold); }
-.maker q { display: block; margin-top: 16px; quotes: none; font-style: italic; font-size: 42px; line-height: 1.25; color: var(--ink-soft); }
+.maker b { display: block; margin-top: 14px; font-family: var(--display); font-weight: 900; text-transform: uppercase; letter-spacing: 0.08em; font-size: 60px; line-height: 1; color: var(--gold); }
+.maker q { display: block; quotes: none; font-style: italic; font-size: 46px; line-height: 1.25; color: var(--cream); }
 .roll .fin { margin: 200px 0 0; font-style: italic; font-size: 40px; color: var(--ink-soft); }
 .roll .returns { margin: 420px 0 0; font-family: var(--display); font-weight: 900; text-transform: uppercase; letter-spacing: 0.06em; font-size: 72px; line-height: 1.1; color: var(--cream); }
 .roll .returns small { display: block; margin-top: 14px; font-family: var(--serif); font-weight: 500; text-transform: none; letter-spacing: 0; font-style: italic; font-size: 40px; color: var(--ink-soft); }

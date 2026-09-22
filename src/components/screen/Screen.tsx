@@ -602,6 +602,25 @@ function CurtainCall({ state }: { state: ShowState }) {
 
 /* ---------------------------------------------------------------- credits */
 
+/** the people who did this, billed the way they deserve; edit freely, this is the bit people remember */
+const MAKERS: { name: string; role: string; line: string }[] = [
+  {
+    name: "Kavya",
+    role: "Executive producer",
+    line: "Created with love and questionable life choices. Sequel confirmed, regrets pending.",
+  },
+  {
+    name: "Mohana",
+    role: "Head of casting and chaos",
+    line: "Kept twenty-seven secrets for a month. Cracked twice. Recovered gracefully.",
+  },
+  {
+    name: "Arokia",
+    role: "Director of code",
+    line: "Coded with Claude and coffee. Any bugs are the popcorn's fault.",
+  },
+];
+
 function Credits({ wishes }: { wishes: Wish[] }) {
   useCue(() => say(showCues.credits), 1500);
   return (
@@ -627,6 +646,14 @@ function Credits({ wishes }: { wishes: Wish[] }) {
         ) : (
           <p className="sub">The audience was speechless.</p>
         )}
+        <h3>The people who did this</h3>
+        {MAKERS.map((m) => (
+          <div className="maker" key={m.name}>
+            <b>{m.name}</b>
+            <span>{m.role}</span>
+            <q>{m.line}</q>
+          </div>
+        ))}
         <p className="fin">No birthdays were harmed in the making of this season.</p>
         <p className="cake">Cake in the lobby.</p>
       </div>

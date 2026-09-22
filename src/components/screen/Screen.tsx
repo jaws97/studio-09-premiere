@@ -616,7 +616,6 @@ function Credits({ wishes }: { wishes: Wish[] }) {
       <div className="roll">
         <h2>Studio 09</h2>
         <p className="sub">The September Season</p>
-        <h3>The people who did this</h3>
         {MAKERS.map((m) => (
           <div className="maker" key={m.name}>
             <q>{m.line}</q>

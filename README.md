@@ -19,6 +19,8 @@ npm run dev
 
 **PIN:** set `HOST_PIN` in `.env.local` (required in production). In development it falls back to `0909`.
 
+**Local data:** `npm run dev` always uses the file store in `.data/`, even when `.env.local` holds Supabase credentials, so rehearsals and test tickets never land in the live database. To point local dev at the live database on purpose, run it with `STORE=supabase` in the environment (PowerShell: `$env:STORE="supabase"; npm run dev`). `/api/health` tells you which store is active.
+
 **Rehearse without a crowd:** `npm run rehearse` simulates 100 guests arriving, tearing tickets, leaving messages and applauding (open `/screen` first; try `-- --guests 150 --arrive 60`). Reset from `/host` afterwards.
 
 **Announcer:** lines live in `src/data/vo.ts`; `/host/script` is the recording sheet. Drop takes into `public/media/vo/<id>.mp3` — until then the browser voice stands in.
@@ -27,7 +29,7 @@ npm run dev
 
 ## Deploy to Vercel
 
-Vercel functions share no memory or disk, so the deployed app must use the Supabase store (it switches on automatically when the credentials are present).
+Vercel functions share no memory or disk, so the deployed app must use the Supabase store (it switches on automatically in production when the credentials are present).
 
 1. **Supabase → SQL editor:** paste and run [supabase/schema.sql](supabase/schema.sql).
 2. **Supabase → Storage:** create a bucket named `s09-photos` and leave it **private**.

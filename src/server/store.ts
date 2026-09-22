@@ -205,8 +205,10 @@ class FileStore implements ShowStore {
 // reload picks up new logic (phase order, seat rules) instead of running stale code against live state.
 const g = globalThis as unknown as { __studio09Mem?: Mem };
 
-// Supabase when its server credentials are present (Vercel's Supabase integration sets both);
-// otherwise the local file store.
+// Supabase in production when its server credentials are present (Vercel's Supabase integration
+// sets both); otherwise the local file store. `next dev` ALWAYS uses the file store, even with a
+// pulled .env.local, so local testing never lands in the live database. STORE=supabase overrides
+// that when you really want local dev against the real thing.
 // The integration lets you choose a prefix when connecting a project (STORAGE_SUPABASE_URL, …),
 // so match on the suffix rather than the exact name.
 function envEndingWith(suffix: string, exclude?: RegExp) {
@@ -218,8 +220,10 @@ function envEndingWith(suffix: string, exclude?: RegExp) {
 }
 const sbUrl = envEndingWith("SUPABASE_URL");
 const sbKey = envEndingWith("SUPABASE_SERVICE_ROLE_KEY", /^NEXT_PUBLIC_/);
-export const storeKind: "supabase" | "file" = sbUrl && sbKey ? "supabase" : "file";
+const wantSupabase = process.env.NODE_ENV === "production" || process.env.STORE === "supabase";
+const useSupabase = !!sbUrl && !!sbKey && wantSupabase;
+export const storeKind: "supabase" | "file" = useSupabase ? "supabase" : "file";
 export const store: ShowStore =
-  sbUrl && sbKey
-    ? new SupabaseStore(sbUrl, sbKey)
+  useSupabase
+    ? new SupabaseStore(sbUrl!, sbKey!)
     : new FileStore((g.__studio09Mem ??= { data: null, loading: null, saveTimer: null }));
